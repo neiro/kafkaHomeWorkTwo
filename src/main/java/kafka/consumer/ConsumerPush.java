@@ -79,6 +79,11 @@ public class ConsumerPush {
                                 // Десериализация сообщения
                                 Message message = Message.deserialize(rec.value());
 
+                                // Сымитировать ошибку для тестирования ретраев
+                                if (rec.value().contains("test_retries")) {
+                                    throw new RuntimeException("Симуляция ошибки обработки");
+                                }
+
                                 // Логирование обработанного сообщения
                                 logger.info("Push Consumer получил сообщение: key = {}, value = {}, partition = {}, offset = {}",
                                         rec.key(), message.getValue(), rec.partition(), rec.offset());
@@ -90,9 +95,9 @@ public class ConsumerPush {
                                 logger.error("Ошибка обработки сообщения (попытка {}/{}): {}", attempt, MAX_RETRIES, e.getMessage());
 
                                 if (attempt >= MAX_RETRIES) {
-                                    // Если количество попыток превышает лимит, сообщение может быть отправлено в DLQ
-                                    logger.error("Не удалось обработать сообщение после {} попыток: key = {}, value = {}",
-                                            MAX_RETRIES, rec.key(), rec.value());
+                                    // Если количество попыток превышает лимит, сообщение ДОЛЖНО быть отправлено в DLQ иначе оно потеряется
+                                    logger.error("Не удалось обработать сообщение после {} попыток: message = {}",
+                                            MAX_RETRIES, rec.value());
                                  
                                 } else {
                                     try {

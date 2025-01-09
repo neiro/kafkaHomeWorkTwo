@@ -71,6 +71,8 @@ public class ConsumerPull {
                 // Извлечение сообщений из топика с использованием pull-модели
                 ConsumerRecords<String, String> records = consumer.poll(POLL_TIMEOUT);
 
+                boolean allProcessedSuccessfully = true;
+
                 // Итерация по всем полученным сообщениям
                 for (ConsumerRecord<String, String> rec : records) {
                     int attempt = 0;
@@ -83,7 +85,6 @@ public class ConsumerPull {
                             Message message = Message.deserialize(rec.value());
 
                             // Сымитировать ошибку для тестирования ретраев
-                            // для этого необходимо заслать сообщение с Value = "test_retries"
                             if (rec.value().contains("test_retries")) {
                                 throw new RuntimeException("Симуляция ошибки обработки");
                             }
@@ -92,18 +93,15 @@ public class ConsumerPull {
                             logger.info("Pull Consumer получил сообщение: key = {}, value = {}, partition = {}, offset = {}",
                                     rec.key(), message.getValue(), rec.partition(), rec.offset());
 
-                            
-
                             success = true; // Если обработка успешна, завершаем цикл ретраев
                         } catch (Exception e) {
                             attempt++;
                             logger.error("Ошибка обработки сообщения (попытка {}/{}): {}", attempt, MAX_RETRIES, e.getMessage());
 
                             if (attempt >= MAX_RETRIES) {
-                                // Если количество попыток превышает лимит, сообщение может быть отправлено в DLQ
-                                logger.error("Не удалось обработать сообщение после {} попыток: key = {}, value = {}",
-                                        MAX_RETRIES, rec.key(), rec.value());
-                              
+                                logger.error("Не удалось обработать сообщение после {} попыток: message = {}",
+                                        MAX_RETRIES, rec.value());
+                                allProcessedSuccessfully = false;
                             } else {
                                 try {
                                     // Задержка перед следующей попыткой
@@ -117,14 +115,16 @@ public class ConsumerPull {
                     }
                 }
 
-                // Ручной коммит смещений после успешной обработки сообщений
-                if (!records.isEmpty()) {
+                // Ручной коммит смещений после успешной обработки всех сообщений
+                if (!records.isEmpty() && allProcessedSuccessfully) {
                     try {
                         consumer.commitSync();
                         logger.info("Смещения успешно зафиксированы.");
                     } catch (Exception e) {
                         logger.error("Ошибка коммита смещений: " + e.getMessage());
                     }
+                } else if (!allProcessedSuccessfully) {
+                    logger.warn("Смещения не зафиксированы из-за ошибок обработки.");
                 }
             }
         } finally {
