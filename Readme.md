@@ -111,7 +111,7 @@ java -cp target/kafka-home-work-1.0-jar-with-dependencies.jar kafka.producer.Pro
     - `Логирование` – Вся обработка сообщений сопровождается логами в консоль.
     - Подробные комментарии логики – в классе `src\main\java\kafka\consumer\ConsumerPush.java`.
 
-  **Проверка ретраев (ручная)**
+- **Проверка ретраев (ручная)**
     Остановите приложение с продюсером, чтобы автоматически генерируемые сообщения не мешали тестированию
     В отдельных терминалах запустите:
 
@@ -126,8 +126,8 @@ java -cp target/kafka-home-work-1.0-jar-with-dependencies.jar kafka.producer.Pro
     ```bash
     docker exec -it kafka-0 bash
     kafka-console-producer.sh --broker-list localhost:9092 --topic my-topic
-    отправить сообщение со телом {"key": "test-key", "value": "test_retries"} , где значение value обязательно должно быть равно "test_retries", по которому есть условие проверки ретрая (ручной вызов RuntimeException в консьюмерах)
     ```
+    отправить сообщение со телом {"key": "test-key", "value": "test_retries"} , где значение value обязательно должно быть равно "test_retries", по которому есть условие проверки ретрая (ручной вызов RuntimeException в консьюмерах)
   
 
 ## Параметры конфигурации
