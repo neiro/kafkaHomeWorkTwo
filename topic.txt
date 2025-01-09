@@ -1,0 +1,5 @@
+# Команда для создания топика
+docker exec -it kafka-0 kafka-topics.sh --create --topic my-topic --bootstrap-server 127.0.0.1:9094 --partitions 3 --replication-factor 2
+
+# Команда для описания топика
+docker exec -it kafka-0 kafka-topics.sh --describe --topic my-topic --bootstrap-server 127.0.0.1:9094
