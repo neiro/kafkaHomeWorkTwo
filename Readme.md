@@ -104,21 +104,6 @@
    cd kafkaHomeWorkTwo
 
 
-# Конфигурация Kafka
-kafka:
-  topic:
-    messages: messages
-    filteredMessages: filtered-messages
-    blockedUsers: blocked-users
-    restrictedWords: restricted-words
-  stateStore:
-    blockedUsersStore: blockedUsersStore
-    restrictedWordsStore: restrictedWordsStore
-
-# Конфигурация сервера
-server:
-  port: 8081
-
 # Запуск Приложения
 
 # Доступ к Веб-Интерфейсу и Swagger UI
@@ -148,59 +133,24 @@ server:
 
 ### Управление запрещёнными Словами
 
-1. Используйте html-форму для добавления или удаления запрещенных слов. Также можете использовать Swagger UI или REST-клиенты, такие как Postman, для добавления или удаления запрещённых слов.
-2. Наблюдайте за тем, как сообщения цензурируются на основе обновлённого списка запрещённых слов.
+1. Используйте HTML-форму для добавления или удаления запрещенных слов — это приоритетный вариант тестирования. Также можете использовать Swagger UI или REST-клиенты, такие как Postman, для добавления или удаления запрещённых слов.
+св юю
+2. В Kafka UI можно просмотреть все топики приложения.
 
-### Мониторинг Kafka Топиков
+3. **В консоли приложения можно смотреть логи всех операций приложения. Работает через команду Docker:**
+   ```bash
+   docker logs -f kafka-homework-two-app
 
-Используйте командные инструменты Kafka или графические инструменты, такие как Kafka UI[http://localhost:8080/](http://localhost:8080/), для мониторинга топиков:
+
+# Мониторинг Kafka Топиков
+
+Используйте Kafka UI[http://localhost:8080/](http://localhost:8080/) для мониторинга топиков:
 - `messages`
 - `filtered-messages`
 - `blocked-users`
 - `restricted-words`
 
----
 
-# Тестирование через консоль
-
-## Добавление запрещённого слова
-
-```bash
-# Отправка сообщения для добавления слова
-echo '{"key":"bad","value":"ADD"}' | \
-kafka-console-producer.sh --broker-list localhost:9092 --topic restricted-words --property "parse.key=true" --property "key.separator=:">
-```
-
-## Удаление Запрещённого Слова
-
-```bash
-# Отправка сообщения для удаления слова
-echo '{"key":"bad","value":"DELETE"}' | \
-kafka-console-producer.sh --broker-list localhost:9092 --topic restricted-words --property "parse.key=true" --property "key.separator=:">
-```
-
-## Отправка Сообщения
-
-### Отправка сообщения без цензуры
-
-```bash
-echo '{"senderId":"user1","recipientId":"user2","content":"Привет, это сообщение без цензуры."}' | \
-kafka-console-producer.sh --broker-list localhost:9092 --topic messages --property "parse.key=true" --property "key.separator=:">
-```
-
-### Отправка сообщения с ценхурой
-```bash
-echo '{"senderId":"user3","recipientId":"user2","content":"Это сообщение содержит bad цензуру."}' | \
-kafka-console-producer.sh --broker-list localhost:9092 --topic messages --property "parse.key=true" --property "key.separator=:">
-```
-
-## Блокировка пользователя
-
-```bash
-# Отправка сообщения для блокировки пользователя
-echo '{"userId":"user2","blockedUsers":["user3"]}' | \
-kafka-console-producer.sh --broker-list localhost:9092 --topic blocked-users --property "parse.key=true" --property "key.separator=:">
-```
 
 ## Зависимости
 
@@ -213,4 +163,3 @@ kafka-console-producer.sh --broker-list localhost:9092 --topic blocked-users --p
 - **Swagger/OpenAPI**
 - **Jackson**
 - **SLF4J (Logging)**
-- **JUnit & Mockito (Тестирование)**
