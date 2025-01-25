@@ -1,0 +1,2052 @@
+﻿package org.example;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/**
+ * РћСЃРЅРѕРІРЅРѕР№ РєР»Р°СЃСЃ РїСЂРёР»РѕР¶РµРЅРёСЏ KafkaHomeWorkTwo.
+ * 
+ * Р­С‚РѕС‚ РєР»Р°СЃСЃ Р·Р°РїСѓСЃРєР°РµС‚ Spring Boot РїСЂРёР»РѕР¶РµРЅРёРµ Рё СЏРІР»СЏРµС‚СЃСЏ С‚РѕС‡РєРѕР№ РІС…РѕРґР° РІ РїСЂРѕРіСЂР°РјРјСѓ.
+ * РђРЅРЅРѕС‚Р°С†РёСЏ {@link SpringBootApplication} Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РєРѕРЅС„РёРіСѓСЂРёСЂСѓРµС‚ РїСЂРёР»РѕР¶РµРЅРёРµ, РІРєР»СЋС‡Р°СЏ РєРѕРјРїРѕРЅРµРЅС‚С‹, СЃРєР°РЅРёСЂРѕРІР°РЅРёРµ РїР°РєРµС‚РѕРІ Рё РЅР°СЃС‚СЂРѕР№РєРё.
+ */
+@SpringBootApplication
+public class KafkaHomeWorkTwoApplication {
+
+    /**
+     * Р“Р»Р°РІРЅС‹Р№ РјРµС‚РѕРґ РїСЂРёР»РѕР¶РµРЅРёСЏ.
+     * 
+     * Р­С‚РѕС‚ РјРµС‚РѕРґ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ Р·Р°РїСѓСЃРєР° Spring Boot РїСЂРёР»РѕР¶РµРЅРёСЏ. 
+     * РњРµС‚РѕРґ РІС‹Р·С‹РІР°РµС‚ {@link SpringApplication#run(Class, String...)} РґР»СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РєРѕРЅС‚РµРєСЃС‚Р° Spring Рё Р·Р°РїСѓСЃРєР° РІСЃС‚СЂРѕРµРЅРЅРѕРіРѕ СЃРµСЂРІРµСЂР°.
+     * 
+     * @param args РђСЂРіСѓРјРµРЅС‚С‹ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё, РєРѕС‚РѕСЂС‹Рµ РјРѕРіСѓС‚ Р±С‹С‚СЊ РїРµСЂРµРґР°РЅС‹ РІ РїСЂРёР»РѕР¶РµРЅРёРµ РїСЂРё Р·Р°РїСѓСЃРєРµ.
+     */
+    public static void main(String[] args) {
+        SpringApplication.run(KafkaHomeWorkTwoApplication.class, args);
+    }
+}
+package org.example.config;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * РљРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Р№ РєР»Р°СЃСЃ РґР»СЏ РЅР°СЃС‚СЂРѕР№РєРё Kafka Consumer.
+ * 
+ * Р­С‚РѕС‚ РєР»Р°СЃСЃ РѕС‚РІРµС‡Р°РµС‚ Р·Р° СЃРѕР·РґР°РЅРёРµ Рё РЅР°СЃС‚СЂРѕР№РєСѓ СЌРєР·РµРјРїР»СЏСЂР° {@link KafkaConsumer},
+ * РёСЃРїРѕР»СЊР·СѓСЏ РїР°СЂР°РјРµС‚СЂС‹, РѕРїСЂРµРґРµР»С‘РЅРЅС‹Рµ РІ С„Р°Р№Р»Рµ РЅР°СЃС‚СЂРѕРµРє.
+ */
+@Configuration
+public class KafkaConsumerConfig {
+
+    /** РђРґСЂРµСЃР° Kafka-Р±СЂРѕРєРµСЂРѕРІ, РєРѕС‚РѕСЂС‹Рµ РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ РґР»СЏ РїРѕРґРєР»СЋС‡РµРЅРёСЏ. */
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    /** ID РіСЂСѓРїРїС‹ РїРѕС‚СЂРµР±РёС‚РµР»РµР№ (consumer group ID), РєРѕС‚РѕСЂС‹Р№ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ РѕС„С„СЃРµС‚Р°РјРё Рё Р±Р°Р»Р°РЅСЃРёСЂРѕРІРєРѕР№ РЅР°РіСЂСѓР·РєРё. */
+    @Value("${spring.kafka.consumer.group-id:default-group}")
+    private String groupId;
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ Рё РЅР°СЃС‚СЂР°РёРІР°РµС‚ СЌРєР·РµРјРїР»СЏСЂ {@link KafkaConsumer} РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Kafka.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link KafkaConsumer} РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё СЃРѕРѕР±С‰РµРЅРёР№.
+     */
+    @Bean
+    public KafkaConsumer<String, String> kafkaConsumer() {
+        // РЎРѕР·РґР°С‘Рј РєР°СЂС‚Сѓ СЃРІРѕР№СЃС‚РІ РґР»СЏ РєРѕРЅС„РёРіСѓСЂР°С†РёРё Kafka Consumer
+        Map<String, Object> props = new HashMap<>();
+
+        // РЈРєР°Р·С‹РІР°РµРј Р°РґСЂРµСЃР° Kafka-Р±СЂРѕРєРµСЂРѕРІ
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+
+        // РЈРєР°Р·С‹РІР°РµРј РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РіСЂСѓРїРїС‹ РїРѕС‚СЂРµР±РёС‚РµР»РµР№
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+
+        // РЈРєР°Р·С‹РІР°РµРј РєР»Р°СЃСЃС‹ РґРµСЃРµСЂРёР°Р»РёР·Р°С‚РѕСЂРѕРІ РґР»СЏ РєР»СЋС‡РµР№ Рё Р·РЅР°С‡РµРЅРёР№ СЃРѕРѕР±С‰РµРЅРёР№
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+        // РќР°СЃС‚СЂР°РёРІР°РµРј РїРѕРІРµРґРµРЅРёРµ РїСЂРё РѕС‚СЃСѓС‚СЃС‚РІРёРё РґРѕСЃС‚СѓРїРЅС‹С… РѕС„С„СЃРµС‚РѕРІ
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // РќР°С‡РёРЅР°РµРј С‡С‚РµРЅРёРµ СЃ СЃР°РјРѕРіРѕ РЅР°С‡Р°Р»Р°
+
+        // Р’РѕР·РІСЂР°С‰Р°РµРј СЌРєР·РµРјРїР»СЏСЂ KafkaConsumer СЃ Р·Р°РґР°РЅРЅС‹РјРё РїР°СЂР°РјРµС‚СЂР°РјРё
+        return new KafkaConsumer<>(props);
+    }
+}
+package org.example.config;
+
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.example.model.MessageModel;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.core.*;
+import org.springframework.kafka.support.serializer.JsonSerializer;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+
+/**
+ * РљРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Р№ РєР»Р°СЃСЃ РґР»СЏ РЅР°СЃС‚СЂРѕР№РєРё Kafka Producer.
+ * 
+ * РЎРѕРґРµСЂР¶РёС‚ РЅР°СЃС‚СЂРѕР№РєРё РґР»СЏ СЃРѕР·РґР°РЅРёСЏ РїСЂРѕРґСЋСЃРµСЂРѕРІ, С‚РѕРїРёРєРѕРІ Рё С€Р°Р±Р»РѕРЅРѕРІ Kafka.
+ */
+@Configuration
+public class KafkaProducerConfig {
+
+    /** РђРґСЂРµСЃР° Kafka-Р±СЂРѕРєРµСЂРѕРІ. */
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    /** РќР°Р·РІР°РЅРёРµ С‚РѕРїРёРєР° РґР»СЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ. */
+    @Value("${kafka.topic.restrictedWords:restricted_words}")
+    private String restrictedWordsTopic;
+
+    // РќР°Р·РІР°РЅРёСЏ С‚РѕРїРёРєРѕРІ РґР»СЏ РїСЂРёР»РѕР¶РµРЅРёСЏ
+    public static final String MESSAGES_TOPIC = "messages";
+    public static final String FILTERED_MESSAGES_TOPIC = "filtered_messages";
+    public static final String BLOCKED_USERS_TOPIC = "blocked_users";
+
+    // =================== РћРїСЂРµРґРµР»РµРЅРёРµ С‚РѕРїРёРєРѕРІ ===================
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С‚РѕРїРёРє РґР»СЏ РёСЃС…РѕРґРЅС‹С… СЃРѕРѕР±С‰РµРЅРёР№.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link NewTopic} РґР»СЏ С‚РѕРїРёРєР° "messages".
+     */
+    @Bean
+    public NewTopic messagesTopic() {
+        return new NewTopic(MESSAGES_TOPIC, 1, (short) 1);
+    }
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С‚РѕРїРёРє РґР»СЏ С„РёР»СЊС‚СЂРѕРІР°РЅРЅС‹С… СЃРѕРѕР±С‰РµРЅРёР№.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link NewTopic} РґР»СЏ С‚РѕРїРёРєР° "filtered_messages".
+     */
+    @Bean
+    public NewTopic filteredMessagesTopic() {
+        return new NewTopic(FILTERED_MESSAGES_TOPIC, 1, (short) 1);
+    }
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С‚РѕРїРёРє РґР»СЏ РёРЅС„РѕСЂРјР°С†РёРё Рѕ Р±Р»РѕРєРёСЂРѕРІРєР°С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link NewTopic} РґР»СЏ С‚РѕРїРёРєР° "blocked_users".
+     */
+    @Bean
+    public NewTopic blockedUsersTopic() {
+        return new NewTopic(BLOCKED_USERS_TOPIC, 1, (short) 1);
+    }
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С‚РѕРїРёРє РґР»СЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link NewTopic} РґР»СЏ С‚РѕРїРёРєР° "restricted_words".
+     */
+    @Bean
+    public NewTopic restrictedWordsTopic() {
+        return new NewTopic(restrictedWordsTopic, 1, (short) 1);
+    }
+
+    // =================== РћР±С‰РёРµ РЅР°СЃС‚СЂРѕР№РєРё Producer ===================
+
+    /**
+     * РќР°СЃС‚СЂРѕР№РєРё РєРѕРЅС„РёРіСѓСЂР°С†РёРё РґР»СЏ Kafka Producer.
+     * 
+     * @return РљР°СЂС‚Р° РЅР°СЃС‚СЂРѕРµРє РґР»СЏ Kafka Producer.
+     */
+    private Map<String, Object> producerConfigs() {
+        Map<String, Object> props = new HashMap<>();
+
+        // РђРґСЂРµСЃР° Kafka-Р±СЂРѕРєРµСЂРѕРІ
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+
+        // РЎРµСЂРёР°Р»РёР·Р°С†РёСЏ РєР»СЋС‡РµР№ СЃРѕРѕР±С‰РµРЅРёР№
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        return props;
+    }
+
+    // =================== ProducerFactory Рё KafkaTemplate РґР»СЏ MessageModel ===================
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С„Р°Р±СЂРёРєСѓ РїСЂРѕРґСЋСЃРµСЂРѕРІ РґР»СЏ СЃРѕРѕР±С‰РµРЅРёР№ С‚РёРїР° {@link MessageModel}.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link ProducerFactory} РґР»СЏ СЃРѕРѕР±С‰РµРЅРёР№ С‚РёРїР° {@link MessageModel}.
+     */
+    @Bean
+    public ProducerFactory<String, MessageModel> messageModelProducerFactory() {
+        Map<String, Object> props = producerConfigs();
+
+        // РЎРµСЂРёР°Р»РёР·Р°С†РёСЏ Р·РЅР°С‡РµРЅРёР№ СЃРѕРѕР±С‰РµРЅРёР№ РєР°Рє JSON
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        props.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false); // РЈРґР°Р»СЏРµРј С‚РёРї-Р·Р°РіРѕР»РѕРІРєРё
+
+        return new DefaultKafkaProducerFactory<>(props);
+    }
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С€Р°Р±Р»РѕРЅ Kafka РґР»СЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№ С‚РёРїР° {@link MessageModel}.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link KafkaTemplate} РґР»СЏ СЃРѕРѕР±С‰РµРЅРёР№ С‚РёРїР° {@link MessageModel}.
+     */
+    @Bean
+    public KafkaTemplate<String, MessageModel> messageModelKafkaTemplate() {
+        return new KafkaTemplate<>(messageModelProducerFactory());
+    }
+
+    // =================== ProducerFactory Рё KafkaTemplate РґР»СЏ String ===================
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С„Р°Р±СЂРёРєСѓ РїСЂРѕРґСЋСЃРµСЂРѕРІ РґР»СЏ СЃС‚СЂРѕРєРѕРІС‹С… СЃРѕРѕР±С‰РµРЅРёР№.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link ProducerFactory} РґР»СЏ СЃС‚СЂРѕРєРѕРІС‹С… СЃРѕРѕР±С‰РµРЅРёР№.
+     */
+    @Bean
+    public ProducerFactory<String, String> stringProducerFactory() {
+        Map<String, Object> props = producerConfigs();
+
+        // РЎРµСЂРёР°Р»РёР·Р°С†РёСЏ Р·РЅР°С‡РµРЅРёР№ СЃРѕРѕР±С‰РµРЅРёР№ РєР°Рє СЃС‚СЂРѕРєРё
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        return new DefaultKafkaProducerFactory<>(props);
+    }
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С€Р°Р±Р»РѕРЅ Kafka РґР»СЏ РѕС‚РїСЂР°РІРєРё СЃС‚СЂРѕРєРѕРІС‹С… СЃРѕРѕР±С‰РµРЅРёР№.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link KafkaTemplate} РґР»СЏ СЃС‚СЂРѕРєРѕРІС‹С… СЃРѕРѕР±С‰РµРЅРёР№.
+     */
+    @Bean
+    public KafkaTemplate<String, String> stringKafkaTemplate() {
+        return new KafkaTemplate<>(stringProducerFactory());
+    }
+
+    // =================== ProducerFactory Рё KafkaTemplate РґР»СЏ List<String> ===================
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С„Р°Р±СЂРёРєСѓ РїСЂРѕРґСЋСЃРµСЂРѕРІ РґР»СЏ СЃРѕРѕР±С‰РµРЅРёР№ С‚РёРїР° List<String>.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link ProducerFactory} РґР»СЏ СЃРѕРѕР±С‰РµРЅРёР№ С‚РёРїР° List<String>.
+     */
+    @Bean
+    public ProducerFactory<String, List<String>> listProducerFactory() {
+        Map<String, Object> props = producerConfigs();
+
+        // РЎРµСЂРёР°Р»РёР·Р°С†РёСЏ Р·РЅР°С‡РµРЅРёР№ СЃРѕРѕР±С‰РµРЅРёР№ РєР°Рє JSON
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        return new DefaultKafkaProducerFactory<>(props);
+    }
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ С€Р°Р±Р»РѕРЅ Kafka РґР»СЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№ С‚РёРїР° List<String>.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link KafkaTemplate} РґР»СЏ СЃРѕРѕР±С‰РµРЅРёР№ С‚РёРїР° List<String>.
+     */
+    @Bean
+    public KafkaTemplate<String, List<String>> listKafkaTemplate() {
+        return new KafkaTemplate<>(listProducerFactory());
+    }
+}
+package org.example.config;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+/**
+ * РљРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Р№ РєР»Р°СЃСЃ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРјРё СЃРІРѕР№СЃС‚РІР°РјРё Kafka.
+ *
+ * Р­С‚РѕС‚ РєР»Р°СЃСЃ СЃРІСЏР·С‹РІР°РµС‚ СЃРІРѕР№СЃС‚РІР° РёР· С„Р°Р№Р»Р° РєРѕРЅС„РёРіСѓСЂР°С†РёРё СЃ Java-РѕР±СЉРµРєС‚РѕРј.
+ * РЎРІРѕР№СЃС‚РІР° РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ РѕРїРёСЃР°РЅС‹ РІ С„Р°Р№Р»Рµ РєРѕРЅС„РёРіСѓСЂР°С†РёРё СЃ РїСЂРµС„РёРєСЃРѕРј "kafka".
+ */
+@Component
+@ConfigurationProperties(prefix = "kafka")
+public class KafkaProperties {
+
+    /** РЎРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ, Р·Р°РґР°С‘С‚СЃСЏ РІ РєРѕРЅС„РёРіСѓСЂР°С†РёРё. */
+    private List<String> restrictedWords;
+
+    /** РЎРїРёСЃРѕРє РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№, РєРѕС‚РѕСЂС‹Рµ РЅР°С…РѕРґСЏС‚СЃСЏ РІ Р±Р»РѕРєРёСЂРѕРІРєРµ, Р·Р°РґР°С‘С‚СЃСЏ РІ РєРѕРЅС„РёРіСѓСЂР°С†РёРё. */
+    private List<String> blockedUsers;
+
+    /**
+     * Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     *
+     * @return РЎРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     */
+    public List<String> getRestrictedWords() {
+        return restrictedWords;
+    }
+
+    /**
+     * РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СЃРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     *
+     * @param restrictedWords РЎРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     */
+    public void setRestrictedWords(List<String> restrictedWords) {
+        this.restrictedWords = restrictedWords;
+    }
+
+    /**
+     * Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     *
+     * @return РЎРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     */
+    public List<String> getBlockedUsers() {
+        return blockedUsers;
+    }
+
+    /**
+     * РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СЃРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     *
+     * @param blockedUsers РЎРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     */
+    public void setBlockedUsers(List<String> blockedUsers) {
+        this.blockedUsers = blockedUsers;
+    }
+}
+package org.example.config;
+
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.StreamsConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import org.springframework.boot.ApplicationRunner;
+import java.time.Duration;
+
+/**
+ * РљРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Р№ РєР»Р°СЃСЃ РґР»СЏ РЅР°СЃС‚СЂРѕР№РєРё Kafka Streams Рё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РґР°РЅРЅС‹С….
+ * 
+ * Р­С‚РѕС‚ РєР»Р°СЃСЃ РѕС‚РІРµС‡Р°РµС‚ Р·Р° РєРѕРЅС„РёРіСѓСЂР°С†РёСЋ РїР°СЂР°РјРµС‚СЂРѕРІ Kafka Streams,
+ * РїСЂРѕРІРµСЂРєСѓ СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ С‚РѕРїРёРєРѕРІ Рё Р·Р°РіСЂСѓР·РєСѓ С‚РµСЃС‚РѕРІС‹С… РґР°РЅРЅС‹С….
+ */
+@Configuration
+public class ProcessorApiConfig {
+
+    /** Р›РѕРіРіРµСЂ РґР»СЏ РІС‹РІРѕРґР° РёРЅС„РѕСЂРјР°С†РёРё Рё РѕС€РёР±РѕРє. */
+    private static final Logger logger = LoggerFactory.getLogger(ProcessorApiConfig.class);
+
+    /** РђРґСЂРµСЃР° Kafka-Р±СЂРѕРєРµСЂРѕРІ. */
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    /** ID РїСЂРёР»РѕР¶РµРЅРёСЏ Kafka Streams. */
+    @Value("${spring.kafka.streams.application-id:kafka_homework_two_app_id}")
+    private String applicationId;
+
+    /** РљРѕР»РёС‡РµСЃС‚РІРѕ РїРѕС‚РѕРєРѕРІ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё Kafka Streams. */
+    @Value("${spring.kafka.streams.num-stream-threads:1}")
+    private int numStreamThreads;
+
+    /** Р“Р°СЂР°РЅС‚РёРё РѕР±СЂР°Р±РѕС‚РєРё СЃРѕРѕР±С‰РµРЅРёР№. */
+    @Value("${spring.kafka.streams.process-guarantee:exactly_once_v2}")
+    private String processingGuarantee;
+
+    /** Р”РёСЂРµРєС‚РѕСЂРёСЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЃРѕСЃС‚РѕСЏРЅРёСЏ Kafka Streams. */
+    @Value("${spring.kafka.streams.state-dir:/var/lib/kafka-streams-state}")
+    private String stateDir;
+
+    /** РќР°Р·РІР°РЅРёРµ С‚РѕРїРёРєР° РґР»СЏ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№. */
+    @Value("${kafka.topic.blockedUsers}")
+    private String blockedUsersTopic;
+
+    /** РќР°Р·РІР°РЅРёРµ С‚РѕРїРёРєР° РґР»СЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ. */
+    @Value("${kafka.topic.restrictedWords}")
+    private String restrictedWordsTopic;
+
+    /** РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕРїС‹С‚РѕРє РґР»СЏ РѕС‚РїСЂР°РІРєРё РґР°РЅРЅС‹С…. */
+    @Value("${kafka.producer.max-retries:3}")
+    private int maxRetries;
+
+    /** РўР°Р№РјР°СѓС‚ РґР»СЏ РѕР¶РёРґР°РЅРёСЏ РѕС‚РІРµС‚Р° РїСЂРё СЃРѕР·РґР°РЅРёРё С‚РѕРїРёРєРѕРІ. */
+    @Value("${kafka.admin.timeout-ms:10000}")
+    private int adminTimeoutMs;
+
+    /**
+     * РќР°СЃС‚СЂРѕР№РєРё Kafka Streams.
+     * 
+     * @return РћР±СЉРµРєС‚ {@link Properties}, СЃРѕРґРµСЂР¶Р°С‰РёР№ РЅР°СЃС‚СЂРѕР№РєРё Kafka Streams.
+     */
+    @Bean("kafkaStreamsProperties")
+    public Properties kafkaStreamsProperties() {
+        Properties props = new Properties();
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, applicationId);
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, numStreamThreads);
+        props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, processingGuarantee);
+        props.put(StreamsConfig.STATE_DIR_CONFIG, stateDir);
+        props.put(StreamsConfig.METRICS_RECORDING_LEVEL_CONFIG, "INFO");
+        props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 100);
+
+        logger.info("Kafka Streams Properties: {}", props);
+        return props;
+    }
+
+    /**
+     * РРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚ Kafka: РїСЂРѕРІРµСЂСЏРµС‚ СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёРµ С‚РѕРїРёРєРѕРІ Рё Р·Р°РіСЂСѓР¶Р°РµС‚ С‚РµСЃС‚РѕРІС‹Рµ РґР°РЅРЅС‹Рµ.
+     * 
+     * @return {@link ApplicationRunner}, РІС‹РїРѕР»РЅСЏСЋС‰РёР№ РїСЂРѕРІРµСЂРєСѓ Рё Р·Р°РіСЂСѓР·РєСѓ РґР°РЅРЅС‹С… РїСЂРё Р·Р°РїСѓСЃРєРµ.
+     */
+    @Bean
+    public ApplicationRunner initializeKafka() {
+        return args -> {
+            ensureTopicsExist();
+            initializeTestData();
+        };
+    }
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ СЌРєР·РµРјРїР»СЏСЂ {@link KafkaStreams} СЃ Р·Р°РґР°РЅРЅС‹Рј С‚РѕРїРѕР»РѕРіРёРµР№ Рё РЅР°СЃС‚СЂРѕР№РєР°РјРё.
+     * 
+     * @param topology РўРѕРїРѕР»РѕРіРёСЏ Kafka Streams.
+     * @param kafkaStreamsProperties РќР°СЃС‚СЂРѕР№РєРё Kafka Streams.
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link KafkaStreams}.
+     */
+    @Bean(destroyMethod = "close")
+    public KafkaStreams kafkaStreams(Topology topology, Properties kafkaStreamsProperties) {
+        KafkaStreams streams = new KafkaStreams(topology, kafkaStreamsProperties);
+
+        // Р”РѕР±Р°РІР»СЏРµРј СЃР»СѓС€Р°С‚РµР»СЊ РёР·РјРµРЅРµРЅРёР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ
+        streams.setStateListener((newState, oldState) -> {
+            logger.info("РЎРѕСЃС‚РѕСЏРЅРёРµ Kafka Streams РёР·РјРµРЅРёР»РѕСЃСЊ: {} -> {}", oldState, newState);
+        });
+
+        // Р—Р°РїСѓСЃРєР°РµРј Kafka Streams
+        streams.start();
+        logger.info("Kafka Streams Р·Р°РїСѓС‰РµРЅ СЃ РЅР°СЃС‚СЂРѕР№РєР°РјРё: {}", kafkaStreamsProperties);
+
+        // Р”РѕР±Р°РІР»СЏРµРј shutdown hook РґР»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ Р·Р°РІРµСЂС€РµРЅРёСЏ
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("РРЅРёС†РёРёСЂРѕРІР°РЅР° РѕСЃС‚Р°РЅРѕРІРєР° Kafka Streams...");
+            streams.close();
+        }));
+
+        return streams;
+    }
+
+    /**
+     * РџСЂРѕРІРµСЂСЏРµС‚ СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёРµ С‚РѕРїРёРєРѕРІ Рё СЃРѕР·РґР°С‘С‚ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ.
+     */
+    private void ensureTopicsExist() {
+        Properties adminProps = new Properties();
+        adminProps.put("bootstrap.servers", bootstrapServers);
+
+        try (AdminClient adminClient = AdminClient.create(adminProps)) {
+            // РЎРїРёСЃРѕРє РІСЃРµС… РЅРµРѕР±С…РѕРґРёРјС‹С… С‚РѕРїРёРєРѕРІ
+            List<NewTopic> topics = List.of(
+                new NewTopic(blockedUsersTopic, 1, (short) 1),
+                new NewTopic(restrictedWordsTopic, 1, (short) 1)
+            );
+
+            // РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… С‚РѕРїРёРєРѕРІ
+            var existingTopics = adminClient.listTopics().names().get(adminTimeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS);
+
+            // РћС‚С„РёР»СЊС‚СЂРѕРІС‹РІР°РµРј С‚РѕР»СЊРєРѕ С‚Рµ С‚РѕРїРёРєРё, РєРѕС‚РѕСЂС‹Рµ РµС‰С‘ РЅРµ СЃСѓС‰РµСЃС‚РІСѓСЋС‚
+            List<NewTopic> topicsToCreate = topics.stream()
+                .filter(topic -> !existingTopics.contains(topic.name()))
+                .toList();
+
+            if (!topicsToCreate.isEmpty()) {
+                adminClient.createTopics(topicsToCreate).all().get();
+                logger.info("РЎРѕР·РґР°РЅС‹ С‚РѕРїРёРєРё: {}", topicsToCreate.stream().map(NewTopic::name).toList());
+            } else {
+                logger.info("Р’СЃРµ С‚РѕРїРёРєРё СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‚: {}", topics.stream().map(NewTopic::name).toList());
+            }
+        } catch (Exception e) {
+            logger.error("РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё С‚РѕРїРёРєРѕРІ: {}", e.getMessage(), e);
+            throw new IllegalStateException("РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ С‚РѕРїРёРєРё Kafka", e);
+        }
+    }
+
+    /**
+     * Р—Р°РіСЂСѓР¶Р°РµС‚ С‚РµСЃС‚РѕРІС‹Рµ РґР°РЅРЅС‹Рµ РІ С‚РѕРїРёРєРё Kafka, РµСЃР»Рё РёС… РµС‰С‘ РЅРµС‚.
+     */
+    private void initializeTestData() {
+        logger.info("РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‚РµСЃС‚РѕРІС‹С… РґР°РЅРЅС‹С… РґР»СЏ Kafka...");
+
+        Properties props = new Properties();
+        props.put("bootstrap.servers", bootstrapServers);
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("group.id", "test-data-initializer");
+        props.put("auto.offset.reset", "earliest");
+
+        try (KafkaProducer<String, String> producer = new KafkaProducer<>(props);
+            KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            // РЎРЅР°С‡Р°Р»Р° С‡РёС‚Р°РµРј СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ РґР°РЅРЅС‹Рµ РёР· С‚РѕРїРёРєРѕРІ
+            Map<String, List<String>> existingBlockedUsers = readExistingDataFromTopic(consumer, blockedUsersTopic);
+            List<String> existingRestrictedWords = readExistingKeysFromTopic(consumer, restrictedWordsTopic);
+
+            // Р”Р°РЅРЅС‹Рµ РґР»СЏ С‚РѕРїРёРєР° `blockedUsersTopic`
+            Map<String, List<String>> blockedUsersMap = Map.of(
+                "alice", List.of("bob", "bob1"),
+                "eve", List.of("adam")
+            );
+
+            for (Map.Entry<String, List<String>> entry : blockedUsersMap.entrySet()) {
+                String user = entry.getKey();
+                List<String> blockedUsers = entry.getValue();
+
+                if (!existingBlockedUsers.containsKey(user)) {
+                    // РџСЂРµРѕР±СЂР°Р·СѓРµРј СЃРїРёСЃРѕРє РІ JSON
+                    String jsonValue = objectMapper.writeValueAsString(blockedUsers);
+                    producer.send(new ProducerRecord<>(blockedUsersTopic, user, jsonValue));
+                    logger.info("Р”РѕР±Р°РІР»РµРЅРѕ РІ С‚РѕРїРёРє {}: РєР»СЋС‡ = {}, Р·РЅР°С‡РµРЅРёРµ = {}", blockedUsersTopic, user, jsonValue);
+                } else {
+                    logger.info("Р”Р°РЅРЅС‹Рµ РґР»СЏ РєР»СЋС‡Р° {} СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‚ РІ С‚РѕРїРёРєРµ {}. РџСЂРѕРїСѓСЃРєР°РµРј Р·Р°РїРёСЃСЊ.", user, blockedUsersTopic);
+                }
+            }
+
+            // Р”Р°РЅРЅС‹Рµ РґР»СЏ С‚РѕРїРёРєР° `restrictedWordsTopic`
+            List<String> restrictedWords = List.of("111", "222", "333");
+            for (String word : restrictedWords) {
+                if (!existingRestrictedWords.contains(word)) {
+                    producer.send(new ProducerRecord<>(restrictedWordsTopic, word, "ADD"));
+                    logger.info("Р”РѕР±Р°РІР»РµРЅРѕ РІ С‚РѕРїРёРє {}: Р·Р°РїСЂРµС‰С‘РЅРЅРѕРµ СЃР»РѕРІРѕ = {}", restrictedWordsTopic, word);
+                } else {
+                    logger.info("РЎР»РѕРІРѕ {} СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ С‚РѕРїРёРєРµ {}. РџСЂРѕРїСѓСЃРєР°РµРј Р·Р°РїРёСЃСЊ.", word, restrictedWordsTopic);
+                }
+            }
+
+            producer.flush();
+        } catch (Exception e) {
+            logger.error("РћС€РёР±РєР° РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РґР°РЅРЅС‹С… Kafka: {}", e.getMessage(), e);
+            throw new IllegalStateException("РќРµ СѓРґР°Р»РѕСЃСЊ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°С‚СЊ С‚РµСЃС‚РѕРІС‹Рµ РґР°РЅРЅС‹Рµ Kafka", e);
+        }
+
+        logger.info("РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‚РµСЃС‚РѕРІС‹С… РґР°РЅРЅС‹С… Р·Р°РІРµСЂС€РµРЅР°.");
+    }
+
+    /**
+     * Р§РёС‚Р°РµС‚ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ РґР°РЅРЅС‹Рµ РёР· С‚РѕРїРёРєР°, РІРѕР·РІСЂР°С‰Р°СЏ РёС… РІ РІРёРґРµ Map.
+     */
+    private Map<String, List<String>> readExistingDataFromTopic(KafkaConsumer<String, String> consumer, String topic) {
+        consumer.subscribe(Collections.singletonList(topic));
+        Map<String, List<String>> data = new HashMap<>();
+
+        ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5));
+        for (ConsumerRecord<String, String> record : records) {
+            try {
+                List<String> value = new ObjectMapper().readValue(record.value(), new TypeReference<>() {});
+                data.put(record.key(), value);
+            } catch (Exception e) {
+                logger.warn("РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ РёР· С‚РѕРїРёРєР° {}: РєР»СЋС‡ = {}, Р·РЅР°С‡РµРЅРёРµ = {}", topic, record.key(), record.value(), e);
+            }
+        }
+
+        return data;
+    }
+
+    /**
+     * Р§РёС‚Р°РµС‚ РІСЃРµ РєР»СЋС‡Рё РёР· С‚РѕРїРёРєР°.
+     */
+    private List<String> readExistingKeysFromTopic(KafkaConsumer<String, String> consumer, String topic) {
+        consumer.subscribe(Collections.singletonList(topic));
+        List<String> keys = new ArrayList<>();
+
+        ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5));
+        for (ConsumerRecord<String, String> record : records) {
+            keys.add(record.key());
+        }
+
+        return keys;
+    }
+
+}
+package org.example.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+/**
+ * РљРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Р№ РєР»Р°СЃСЃ РґР»СЏ РЅР°СЃС‚СЂРѕР№РєРё CORS (Cross-Origin Resource Sharing).
+ * 
+ * CORS РїРѕР·РІРѕР»СЏРµС‚ СѓРїСЂР°РІР»СЏС‚СЊ РґРѕСЃС‚СѓРїРѕРј Рє СЂРµСЃСѓСЂСЃР°Рј СЃРµСЂРІРµСЂР° РёР· РґСЂСѓРіРёС… РґРѕРјРµРЅРѕРІ.
+ * Р­С‚РѕС‚ РєР»Р°СЃСЃ РѕРїСЂРµРґРµР»СЏРµС‚ РїСЂР°РІРёР»Р° РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё CORS-Р·Р°РїСЂРѕСЃРѕРІ.
+ */
+@Configuration
+public class WebConfig {
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ Р±РёРЅ {@link WebMvcConfigurer} РґР»СЏ РЅР°СЃС‚СЂРѕР№РєРё CORS.
+     * 
+     * @return Р­РєР·РµРјРїР»СЏСЂ {@link WebMvcConfigurer} СЃ РѕРїСЂРµРґРµР»С‘РЅРЅС‹РјРё РїСЂР°РІРёР»Р°РјРё CORS.
+     */
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+
+            /**
+             * РќР°СЃС‚СЂРѕР№РєР° РїСЂР°РІРёР» РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё CORS-Р·Р°РїСЂРѕСЃРѕРІ.
+             * 
+             * @param registry Р РµРµСЃС‚СЂ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РїСЂР°РІРёР» CORS.
+             */
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**") // РџСЂРёРјРµРЅСЏРµС‚СЃСЏ РєРѕ РІСЃРµРј РїСѓС‚СЏРј РЅР° СЃРµСЂРІРµСЂРµ
+                    .allowedOrigins("http://localhost:8081") // Р Р°Р·СЂРµС€С‘РЅРЅС‹Р№ РёСЃС‚РѕС‡РЅРёРє Р·Р°РїСЂРѕСЃРѕРІ (Р»РѕРєР°Р»СЊРЅС‹Р№ РґР»СЏ С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ)
+                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Р Р°Р·СЂРµС€С‘РЅРЅС‹Рµ HTTP-РјРµС‚РѕРґС‹
+                    .allowedHeaders("*") // Р Р°Р·СЂРµС€С‘РЅРЅС‹Рµ Р·Р°РіРѕР»РѕРІРєРё Р·Р°РїСЂРѕСЃРѕРІ
+                    .allowCredentials(true); // Р Р°Р·СЂРµС€РµРЅРёРµ РЅР° РїРµСЂРµРґР°С‡Сѓ СѓС‡РµС‚РЅС‹С… РґР°РЅРЅС‹С… (РЅР°РїСЂРёРјРµСЂ, РєСѓРєРё РёР»Рё Р°РІС‚РѕСЂРёР·Р°С†РёРѕРЅРЅС‹Рµ Р·Р°РіРѕР»РѕРІРєРё)
+            }
+        };
+    }
+}
+package org.example.controller;
+
+import org.example.model.UserBlockInfo;
+import org.example.service.BlockedUsersService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.http.HttpStatus;
+
+import java.util.List;
+
+/**
+ * РљРѕРЅС‚СЂРѕР»Р»РµСЂ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ Р±Р»РѕРєРёСЂРѕРІРєР°РјРё РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+ * РџСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ РѕРїРµСЂР°С†РёРё РґР»СЏ Р±Р»РѕРєРёСЂРѕРІРєРё, СЂР°Р·Р±Р»РѕРєРёСЂРѕРІРєРё Рё РїРѕР»СѓС‡РµРЅРёСЏ СЃРїРёСЃРєРѕРІ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+ */
+@RestController
+@RequestMapping("/api/blocking")
+@Tag(name = "BlockController", description = "РЈРїСЂР°РІР»РµРЅРёРµ Р±Р»РѕРєРёСЂРѕРІРєР°РјРё РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№")
+public class BlockController {
+
+    /**
+     * РЎРµСЂРІРёСЃ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹РјРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРјРё.
+     */
+    private final BlockedUsersService blockedUsersService;
+
+    /**
+     * РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РєРѕРЅС‚СЂРѕР»Р»РµСЂР°. РРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚ Р·Р°РІРёСЃРёРјРѕСЃС‚СЊ СЃРµСЂРІРёСЃР° Р±Р»РѕРєРёСЂРѕРІРѕРє РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     * 
+     * @param blockedUsersService РЎРµСЂРІРёСЃ, РѕР±СЂР°Р±Р°С‚С‹РІР°СЋС‰РёР№ Р»РѕРіРёРєСѓ Р±Р»РѕРєРёСЂРѕРІРѕРє.
+     */
+    @Autowired
+    public BlockController(BlockedUsersService blockedUsersService) {
+        this.blockedUsersService = blockedUsersService;
+    }
+
+
+    /**
+     * РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РґР»СЏ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
+     * 
+     * @param recipientId РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ Р·Р°РїСЂР°С€РёРІР°РµС‚СЃСЏ СЃРїРёСЃРѕРє.
+     * @return РЎРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РёР»Рё СЃС‚Р°С‚СѓСЃ "204 No Content", РµСЃР»Рё СЃРїРёСЃРѕРє РїСѓСЃС‚.
+     */
+    @GetMapping("/list")
+    @Operation(summary = "РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№")
+    public ResponseEntity<List<String>> getBlockedUsers(@RequestParam @NotBlank String recipientId) {
+        // РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ С‡РµСЂРµР· СЃРµСЂРІРёСЃ
+        List<String> blockedUsers = blockedUsersService.getBlockedUsers(recipientId);
+        // Р•СЃР»Рё СЃРїРёСЃРѕРє РїСѓСЃС‚, РІРµСЂРЅСѓС‚СЊ СЃС‚Р°С‚СѓСЃ 204 No Content
+        if (blockedUsers.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        // Р’РѕР·РІСЂР°С‚ СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+        return ResponseEntity.ok(blockedUsers);
+    }
+
+    /**
+     * РџРѕР»СѓС‡РµРЅРёРµ РІСЃРµС… Р±Р»РѕРєРёСЂРѕРІРѕРє РІ СЃРёСЃС‚РµРјРµ.
+     * 
+     * @return РЎРїРёСЃРѕРє РІСЃРµС… Р±Р»РѕРєРёСЂРѕРІРѕРє РІ СЃРёСЃС‚РµРјРµ (РѕР±СЉРµРєС‚С‹ UserBlockInfo) РёР»Рё СЃС‚Р°С‚СѓСЃ "204 No Content", РµСЃР»Рё СЃРїРёСЃРѕРє РїСѓСЃС‚.
+     */
+    @GetMapping("/all")
+    @Operation(summary = "РџРѕР»СѓС‡РµРЅРёРµ РІСЃРµС… Р±Р»РѕРєРёСЂРѕРІРѕРє")
+    public ResponseEntity<List<UserBlockInfo>> getAllBlockedUsers() {
+        // РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° РІСЃРµС… Р±Р»РѕРєРёСЂРѕРІРѕРє С‡РµСЂРµР· СЃРµСЂРІРёСЃ
+        List<UserBlockInfo> allBlockedUsers = blockedUsersService.getAllBlockedUsers();
+        // Р•СЃР»Рё СЃРїРёСЃРѕРє РїСѓСЃС‚, РІРµСЂРЅСѓС‚СЊ СЃС‚Р°С‚СѓСЃ 204 No Content
+        if (allBlockedUsers.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        // Р’РѕР·РІСЂР°С‚ СЃРїРёСЃРєР° РІСЃРµС… Р±Р»РѕРєРёСЂРѕРІРѕРє
+        return ResponseEntity.ok(allBlockedUsers);
+    }
+
+    /**
+     * РћР±СЂР°Р±РѕС‚С‡РёРє РёСЃРєР»СЋС‡РµРЅРёР№, РІРѕР·РЅРёРєР°СЋС‰РёС… РІ РєРѕРЅС‚СЂРѕР»Р»РµСЂРµ.
+     * 
+     * @param e РСЃРєР»СЋС‡РµРЅРёРµ, РІРѕР·РЅРёРєС€РµРµ РІ РїСЂРѕС†РµСЃСЃРµ РІС‹РїРѕР»РЅРµРЅРёСЏ Р·Р°РїСЂРѕСЃР°.
+     * @return РћС‚РІРµС‚ СЃ СЃРѕРѕР±С‰РµРЅРёРµРј РѕР± РѕС€РёР±РєРµ Рё СЃС‚Р°С‚СѓСЃРѕРј 500 Internal Server Error.
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        // Р’РѕР·РІСЂР°С‚ СЃРѕРѕР±С‰РµРЅРёСЏ РѕР± РѕС€РёР±РєРµ СЃ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРј СЃС‚Р°С‚СѓСЃРѕРј
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°: " + e.getMessage());
+    }
+}
+package org.example.controller;
+
+import jakarta.validation.constraints.NotNull;
+import org.springframework.boot.web.error.ErrorAttributeOptions;
+import org.springframework.boot.web.servlet.error.ErrorAttributes;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.context.request.WebRequest;
+
+import java.util.Map;
+
+/**
+ * РљРѕРЅС‚СЂРѕР»Р»РµСЂ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РѕС€РёР±РѕРє РїСЂРёР»РѕР¶РµРЅРёСЏ.
+ * РћС‚РІРµС‡Р°РµС‚ Р·Р° РїРµСЂРµС…РІР°С‚ РѕС€РёР±РѕРє Рё РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ СЃС‚СЂР°РЅРёС†С‹ СЃ РїРѕРґСЂРѕР±РЅРѕСЃС‚СЏРјРё РѕС€РёР±РєРё.
+ */
+@Controller
+public class ErrorController implements org.springframework.boot.web.servlet.error.ErrorController {
+
+    /**
+     * РЎРµСЂРІРёСЃ РґР»СЏ РёР·РІР»РµС‡РµРЅРёСЏ Р°С‚СЂРёР±СѓС‚РѕРІ РѕС€РёР±РєРё.
+     */
+    private final ErrorAttributes errorAttributes;
+
+    /**
+     * РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РєРѕРЅС‚СЂРѕР»Р»РµСЂР° РѕС€РёР±РѕРє.
+     * РРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚ Р·Р°РІРёСЃРёРјРѕСЃС‚СЊ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РёРЅС„РѕСЂРјР°С†РёРё РѕР± РѕС€РёР±РєР°С….
+     *
+     * @param errorAttributes РћР±СЉРµРєС‚ РґР»СЏ РёР·РІР»РµС‡РµРЅРёСЏ Р°С‚СЂРёР±СѓС‚РѕРІ РѕС€РёР±РєРё.
+     */
+    public ErrorController(@NotNull ErrorAttributes errorAttributes) {
+        this.errorAttributes = errorAttributes;
+    }
+
+    /**
+     * РњРµС‚РѕРґ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РѕС€РёР±РѕРє.
+     *
+     * @param webRequest Р—Р°РїСЂРѕСЃ, РІ РєРѕС‚РѕСЂРѕРј РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°.
+     * @param model      РњРѕРґРµР»СЊ РґР»СЏ РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С… РѕР± РѕС€РёР±РєРµ РІ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ.
+     * @return РРјСЏ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЃС‚СЂР°РЅРёС†С‹ РѕС€РёР±РєРё.
+     */
+    @RequestMapping("/error")
+    public String handleError(WebRequest webRequest, Model model) {
+        // РР·РІР»РµС‡РµРЅРёРµ Р°С‚СЂРёР±СѓС‚РѕРІ РѕС€РёР±РєРё СЃ РІРєР»СЋС‡РµРЅРёРµРј СЃРѕРѕР±С‰РµРЅРёСЏ РѕР± РѕС€РёР±РєРµ
+        Map<String, Object> errorDetails = errorAttributes.getErrorAttributes(
+            webRequest, ErrorAttributeOptions.of(ErrorAttributeOptions.Include.MESSAGE)
+        );
+
+        // Р”РѕР±Р°РІР»РµРЅРёРµ СЃС‚Р°С‚СѓСЃР° HTTP-РѕС‚РІРµС‚Р° РІ РјРѕРґРµР»СЊ. РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ СЃС‚Р°С‚СѓСЃ 500.
+        model.addAttribute("status", errorDetails.getOrDefault("status", 500));
+
+        // Р”РѕР±Р°РІР»РµРЅРёРµ С‚РµРєСЃС‚РѕРІРѕРіРѕ РѕРїРёСЃР°РЅРёСЏ РѕС€РёР±РєРё РІ РјРѕРґРµР»СЊ. РќР°РїСЂРёРјРµСЂ, "Internal Server Error".
+        model.addAttribute("error", errorDetails.getOrDefault("error", "РќРµРёР·РІРµСЃС‚РЅР°СЏ РѕС€РёР±РєР°"));
+
+        // Р”РѕР±Р°РІР»РµРЅРёРµ СЃРѕРѕР±С‰РµРЅРёСЏ РѕР± РѕС€РёР±РєРµ РІ РјРѕРґРµР»СЊ. Р•СЃР»Рё СЃРѕРѕР±С‰РµРЅРёРµ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚, СѓРєР°Р·С‹РІР°РµС‚СЃСЏ РѕР±С‰РµРµ СЃРѕРѕР±С‰РµРЅРёРµ.
+        model.addAttribute("message", errorDetails.getOrDefault("message", "РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°"));
+
+        // Р”РѕР±Р°РІР»РµРЅРёРµ РїСѓС‚Рё, РЅР° РєРѕС‚РѕСЂРѕРј РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°. Р•СЃР»Рё РїСѓС‚СЊ РЅРµРёР·РІРµСЃС‚РµРЅ, СѓРєР°Р·С‹РІР°РµС‚СЃСЏ Р·РЅР°С‡РµРЅРёРµ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ.
+        model.addAttribute("path", errorDetails.getOrDefault("path", "РќРµРёР·РІРµСЃС‚РЅС‹Р№ РїСѓС‚СЊ"));
+
+        // Р’РѕР·РІСЂР°С‚ РёРјРµРЅРё РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЃС‚СЂР°РЅРёС†С‹ РѕС€РёР±РєРё.
+        return "error"; // РЁР°Р±Р»РѕРЅ error.html РІ РґРёСЂРµРєС‚РѕСЂРёРё templates.
+    }
+}
+package org.example.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.service.RestrictedWordsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
+
+/**
+ * РљРѕРЅС‚СЂРѕР»Р»РµСЂ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ СЃРїРёСЃРєРѕРј Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+ * РџСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ РјРµС‚РѕРґС‹ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ, РґРѕР±Р°РІР»РµРЅРёСЏ Рё СѓРґР°Р»РµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+ */
+@RestController
+@RequestMapping("/api/restricted-words")
+@Tag(name = "Restricted Words", description = "РЈРїСЂР°РІР»РµРЅРёРµ СЃРїРёСЃРєРѕРј Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ")
+public class RestrictedWordsController {
+
+    /**
+     * РЎРµСЂРІРёСЃ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Р·Р°РїСЂРµС‰С‘РЅРЅС‹РјРё СЃР»РѕРІР°РјРё.
+     */
+    private final RestrictedWordsService restrictedWordsService;
+
+    /**
+     * РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РєРѕРЅС‚СЂРѕР»Р»РµСЂР°.
+     * РРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚ Р·Р°РІРёСЃРёРјРѕСЃС‚СЊ СЃРµСЂРІРёСЃР° РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ СЃРїРёСЃРєРѕРј Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     *
+     * @param restrictedWordsService РЎРµСЂРІРёСЃ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Р·Р°РїСЂРµС‰С‘РЅРЅС‹РјРё СЃР»РѕРІР°РјРё.
+     */
+    @Autowired
+    public RestrictedWordsController(RestrictedWordsService restrictedWordsService) {
+        this.restrictedWordsService = restrictedWordsService;
+    }
+
+    /**
+     * РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     *
+     * @return РЎРїРёСЃРѕРє РІСЃРµС… Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ РёР»Рё СЃРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ, РµСЃР»Рё СЃРµСЂРІРµСЂ РЅРµРґРѕСЃС‚СѓРїРµРЅ.
+     */
+    @Operation(
+        summary = "РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ",
+        description = "Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє РІСЃРµС… Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ, С…СЂР°РЅСЏС‰РёС…СЃСЏ РІ СЃРёСЃС‚РµРјРµ.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "РЎРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ", 
+                         content = @Content(mediaType = "application/json", schema = @Schema(implementation = Set.class))),
+            @ApiResponse(responseCode = "503", description = "РЎРµСЂРІРµСЂ РЅРµРґРѕСЃС‚СѓРїРµРЅ", 
+                         content = @Content(mediaType = "text/plain"))
+        }
+    )
+    @GetMapping("/list")
+    public ResponseEntity<?> getRestrictedWordsList() {
+        try {
+            // РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ С‡РµСЂРµР· СЃРµСЂРІРёСЃ
+            Set<String> words = restrictedWordsService.getRestrictedWords();
+            return ResponseEntity.ok(words);
+        } catch (IllegalStateException e) {
+            // РћР±СЂР°Р±РѕС‚РєР° СЃР»СѓС‡Р°СЏ, РєРѕРіРґР° СЃРµСЂРІРµСЂ РЅРµРґРѕСЃС‚СѓРїРµРЅ
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                                 .body("РЎРµСЂРІРµСЂ РІСЂРµРјРµРЅРЅРѕ РЅРµРґРѕСЃС‚СѓРїРµРЅ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РїРѕР·Р¶Рµ.");
+        }
+    }
+
+    /**
+     * Р”РѕР±Р°РІР»РµРЅРёРµ РЅРѕРІРѕРіРѕ Р·Р°РїСЂРµС‰С‘РЅРЅРѕРіРѕ СЃР»РѕРІР° РІ СЃРїРёСЃРѕРє.
+     *
+     * @param key РЎР»РѕРІРѕ, РєРѕС‚РѕСЂРѕРµ РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РІ СЃРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С….
+     * @return РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ СѓСЃРїРµС€РЅРѕРіРѕ РґРѕР±Р°РІР»РµРЅРёСЏ РёР»Рё СЃРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ.
+     */
+    @Operation(
+        summary = "Р”РѕР±Р°РІР»РµРЅРёРµ Р·Р°РїСЂРµС‰С‘РЅРЅРѕРіРѕ СЃР»РѕРІР°",
+        description = "Р”РѕР±Р°РІР»СЏРµС‚ РЅРѕРІРѕРµ СЃР»РѕРІРѕ РІ СЃРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С….",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "РЎР»РѕРІРѕ РґРѕР±Р°РІР»РµРЅРѕ СѓСЃРїРµС€РЅРѕ", 
+                         content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "400", description = "РћС€РёР±РєР° РІР°Р»РёРґР°С†РёРё РїР°СЂР°РјРµС‚СЂР°", 
+                         content = @Content(mediaType = "text/plain"))
+        }
+    )
+    @PostMapping
+    public ResponseEntity<String> addWord(@RequestParam String key) {
+        if (key == null || key.isBlank()) {
+            // РџСЂРѕРІРµСЂРєР° РІР°Р»РёРґРЅРѕСЃС‚Рё РїР°СЂР°РјРµС‚СЂР° key
+            return ResponseEntity.badRequest().body("РџР°СЂР°РјРµС‚СЂ 'key' РѕР±СЏР·Р°С‚РµР»РµРЅ Рё РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј.");
+        }
+
+        // РќРѕСЂРјР°Р»РёР·Р°С†РёСЏ РєР»СЋС‡Р° РїРµСЂРµРґ РґРѕР±Р°РІР»РµРЅРёРµРј РІ СЃРїРёСЃРѕРє
+        String normalizedKey = normalizeKey(key);
+        restrictedWordsService.addWord(normalizedKey);
+        return ResponseEntity.ok("Р—Р°РїСЂРµС‰С‘РЅРЅРѕРµ СЃР»РѕРІРѕ РґРѕР±Р°РІР»РµРЅРѕ: " + normalizedKey);
+    }
+
+    /**
+     * РЈРґР°Р»РµРЅРёРµ СЃР»РѕРІР° РёР· СЃРїРёСЃРєР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С….
+     *
+     * @param key РЎР»РѕРІРѕ, РєРѕС‚РѕСЂРѕРµ РЅСѓР¶РЅРѕ СѓРґР°Р»РёС‚СЊ РёР· СЃРїРёСЃРєР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С….
+     * @return РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ СѓСЃРїРµС€РЅРѕРіРѕ СѓРґР°Р»РµРЅРёСЏ РёР»Рё СЃРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ.
+     */
+    @Operation(
+        summary = "РЈРґР°Р»РµРЅРёРµ Р·Р°РїСЂРµС‰С‘РЅРЅРѕРіРѕ СЃР»РѕРІР°",
+        description = "РЈРґР°Р»СЏРµС‚ СЃР»РѕРІРѕ РёР· СЃРїРёСЃРєР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С….",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "РЎР»РѕРІРѕ СѓРґР°Р»РµРЅРѕ СѓСЃРїРµС€РЅРѕ", 
+                         content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "400", description = "РћС€РёР±РєР° РІР°Р»РёРґР°С†РёРё РїР°СЂР°РјРµС‚СЂР°", 
+                         content = @Content(mediaType = "text/plain"))
+        }
+    )
+    @DeleteMapping("/{key}")
+    public ResponseEntity<String> deleteWord(@PathVariable String key) {
+        if (key == null || key.isBlank()) {
+            // РџСЂРѕРІРµСЂРєР° РІР°Р»РёРґРЅРѕСЃС‚Рё РїР°СЂР°РјРµС‚СЂР° key
+            return ResponseEntity.badRequest().body("РџР°СЂР°РјРµС‚СЂ 'key' РѕР±СЏР·Р°С‚РµР»РµРЅ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ.");
+        }
+
+        // РќРѕСЂРјР°Р»РёР·Р°С†РёСЏ РєР»СЋС‡Р° РїРµСЂРµРґ СѓРґР°Р»РµРЅРёРµРј РёР· СЃРїРёСЃРєР°
+        String normalizedKey = normalizeKey(key);
+        restrictedWordsService.deleteWord(normalizedKey);
+        return ResponseEntity.ok("Р—Р°РїСЂРµС‰С‘РЅРЅРѕРµ СЃР»РѕРІРѕ СѓРґР°Р»РµРЅРѕ: " + normalizedKey);
+    }
+
+    /**
+     * РќРѕСЂРјР°Р»РёР·СѓРµС‚ РєР»СЋС‡ (СЃР»РѕРІРѕ) РґР»СЏ РїСЂРёРІРµРґРµРЅРёСЏ Рє РЅРёР¶РЅРµРјСѓ СЂРµРіРёСЃС‚СЂСѓ.
+     *
+     * @param key РСЃС…РѕРґРЅС‹Р№ РєР»СЋС‡.
+     * @return РќРѕСЂРјР°Р»РёР·РѕРІР°РЅРЅС‹Р№ РєР»СЋС‡.
+     */
+    private String normalizeKey(String key) {
+        // РЈРґР°Р»РµРЅРёРµ Р»РёС€РЅРёС… РїСЂРѕР±РµР»РѕРІ Рё РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ СЃС‚СЂРѕРєРё Рє РЅРёР¶РЅРµРјСѓ СЂРµРіРёСЃС‚СЂСѓ
+        return key.trim().toLowerCase();
+    }
+}
+package org.example.controller;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.example.config.KafkaProducerConfig;
+import org.example.model.MessageModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired; 
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * РљРѕРЅС‚СЂРѕР»Р»РµСЂ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ РІРµР±-РёРЅС‚РµСЂС„РµР№СЃРѕРј Рё РѕС‚РїСЂР°РІРєРѕР№ СЃРѕРѕР±С‰РµРЅРёР№ РІ Kafka.
+ * РџСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ РјРµС‚РѕРґС‹ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РіР»Р°РІРЅРѕР№ СЃС‚СЂР°РЅРёС†С‹ Рё РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№.
+ */
+@Controller
+@RequestMapping("/api/web")
+public class WebController {
+
+    /**
+     * Р›РѕРіРіРµСЂ РґР»СЏ Р·Р°РїРёСЃРё РёРЅС„РѕСЂРјР°С†РёРё Рѕ РґРµР№СЃС‚РІРёСЏС… РІ РєРѕРЅС‚СЂРѕР»Р»РµСЂРµ.
+     */
+    private static final Logger log = LoggerFactory.getLogger(WebController.class);
+
+    /**
+     * РќР°Р·РІР°РЅРёРµ С‚РѕРїРёРєР° Kafka РґР»СЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№.
+     */
+    private static final String MESSAGES_TOPIC = KafkaProducerConfig.MESSAGES_TOPIC;
+
+    /**
+     * РЁР°Р±Р»РѕРЅ Kafka РґР»СЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№.
+     */
+    @Autowired
+    private KafkaTemplate<String, MessageModel> kafkaTemplate;
+
+    /**
+     * РћС‚РѕР±СЂР°Р¶РµРЅРёРµ РіР»Р°РІРЅРѕР№ СЃС‚СЂР°РЅРёС†С‹ РІРµР±-РїСЂРёР»РѕР¶РµРЅРёСЏ.
+     * 
+     * @return РРјСЏ С€Р°Р±Р»РѕРЅР° РіР»Р°РІРЅРѕР№ СЃС‚СЂР°РЅРёС†С‹ (index.html).
+     */
+    @GetMapping("/")
+    public String indexPage() {
+        // Р’РѕР·РІСЂР°С‰Р°РµС‚ С€Р°Р±Р»РѕРЅ РіР»Р°РІРЅРѕР№ СЃС‚СЂР°РЅРёС†С‹
+        return "index";  // Р РµРЅРґРµСЂРёС‚ index.html РёР· resources/templates
+    }
+
+    /**
+     * РћР±СЂР°Р±РѕС‚РєР° РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёСЏ РІ Kafka.
+     * 
+     * @param senderId    РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РѕС‚РїСЂР°РІРёС‚РµР»СЏ (РѕР±СЏР·Р°С‚РµР»СЊРЅРѕРµ РїРѕР»Рµ).
+     * @param recipientId РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СѓС‡Р°С‚РµР»СЏ (РѕР±СЏР·Р°С‚РµР»СЊРЅРѕРµ РїРѕР»Рµ).
+     * @param content     РЎРѕРґРµСЂР¶РёРјРѕРµ СЃРѕРѕР±С‰РµРЅРёСЏ (РѕР±СЏР·Р°С‚РµР»СЊРЅРѕРµ РїРѕР»Рµ, РЅРµ Р±РѕР»РµРµ 500 СЃРёРјРІРѕР»РѕРІ).
+     * @return Р РµРґРёСЂРµРєС‚ РЅР° РіР»Р°РІРЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ РїРѕСЃР»Рµ СѓСЃРїРµС€РЅРѕР№ РѕС‚РїСЂР°РІРєРё.
+     */
+    @PostMapping("/send")
+    public String sendMessage(
+            @RequestParam @NotBlank(message = "ID РѕС‚РїСЂР°РІРёС‚РµР»СЏ РѕР±СЏР·Р°С‚РµР»РµРЅ.") String senderId,
+            @RequestParam @NotBlank(message = "ID РїРѕР»СѓС‡Р°С‚РµР»СЏ РѕР±СЏР·Р°С‚РµР»РµРЅ.") String recipientId,
+            @RequestParam @NotBlank(message = "РЎРѕРґРµСЂР¶РёРјРѕРµ СЃРѕРѕР±С‰РµРЅРёСЏ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј.") 
+            @Size(max = 500, message = "РЎРѕРґРµСЂР¶РёРјРѕРµ СЃРѕРѕР±С‰РµРЅРёСЏ РЅРµ РјРѕР¶РµС‚ РїСЂРµРІС‹С€Р°С‚СЊ 500 СЃРёРјРІРѕР»РѕРІ.") String content) {
+
+        // РЎРѕР·РґР°РЅРёРµ РѕР±СЉРµРєС‚Р° СЃРѕРѕР±С‰РµРЅРёСЏ
+        MessageModel msg = new MessageModel();
+        msg.setSenderId(senderId);
+        msg.setRecipientId(recipientId);
+        msg.setContent(content);
+
+        // РћС‚РїСЂР°РІРєР° СЃРѕРѕР±С‰РµРЅРёСЏ РІ Kafka, РіРґРµ РєР»СЋС‡РѕРј РІС‹СЃС‚СѓРїР°РµС‚ senderId
+        kafkaTemplate.send(MESSAGES_TOPIC, senderId, msg);
+
+        // Р›РѕРіРёСЂРѕРІР°РЅРёРµ РёРЅС„РѕСЂРјР°С†РёРё РѕР± РѕС‚РїСЂР°РІРєРµ СЃРѕРѕР±С‰РµРЅРёСЏ
+        log.info("РЎРѕРѕР±С‰РµРЅРёРµ РѕС‚РїСЂР°РІР»РµРЅРѕ РІ С‚РѕРїРёРє '{}' => {}", MESSAGES_TOPIC, msg);
+
+        // РџРµСЂРµРЅР°РїСЂР°РІР»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅР° РіР»Р°РІРЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ
+        return "redirect:/";
+    }
+}
+package org.example.listener;
+
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Service;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.example.service.RestrictedWordsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Service
+public class RestrictedWordsListener {
+
+    private static final Logger log = LoggerFactory.getLogger(RestrictedWordsListener.class);
+    private final RestrictedWordsService restrictedWordsService;
+
+    public RestrictedWordsListener(RestrictedWordsService restrictedWordsService) {
+        this.restrictedWordsService = restrictedWordsService;
+    }
+
+    @KafkaListener(topics = "${kafka.topic.restrictedWords}")
+    public void listenRestrictedWordsTopic(
+            @Header(KafkaHeaders.RECEIVED_KEY) String word,
+            @Payload(required = false) String event
+    ) {
+        // РћР±СЂР°Р±РѕС‚РєР° null РёР»Рё РїСѓСЃС‚РѕРіРѕ Р·РЅР°С‡РµРЅРёСЏ РґР»СЏ word
+        if (word == null || word.isEmpty()) {
+            log.warn("РџРѕР»СѓС‡РµРЅРѕ СЃРѕРѕР±С‰РµРЅРёРµ Р±РµР· РєР»СЋС‡Р° (word). РћС‚РєР»РѕРЅРµРЅРѕ.");
+            return;
+        }
+
+        // Р•СЃР»Рё event == null, СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј Р·РЅР°С‡РµРЅРёРµ "DELETE"
+        String effectiveEvent = (event == null || event.isEmpty()) ? "DELETE" : event;
+
+        log.debug("РћР±СЂР°Р±РѕС‚РєР° СЃРѕРѕР±С‰РµРЅРёСЏ. РЎР»РѕРІРѕ: {}, СЃРѕР±С‹С‚РёРµ: {}", word, effectiveEvent);
+
+        // РџРµСЂРµРґР°С‡Р° РґР°РЅРЅС‹С… РІ СЃРµСЂРІРёСЃ
+        restrictedWordsService.handleKafkaEvent(word, effectiveEvent);
+    }
+}
+package org.example.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
+
+/**
+ * РњРѕРґРµР»СЊ РґР°РЅРЅС‹С… РґР»СЏ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ СЃРѕРѕР±С‰РµРЅРёСЏ.
+ * РЎРѕРґРµСЂР¶РёС‚ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕС‚РїСЂР°РІРёС‚РµР»Рµ, РїРѕР»СѓС‡Р°С‚РµР»Рµ Рё СЃРѕРґРµСЂР¶РёРјРѕРј СЃРѕРѕР±С‰РµРЅРёСЏ.
+ */
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MessageModel {
+
+    /**
+     * РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РѕС‚РїСЂР°РІРёС‚РµР»СЏ СЃРѕРѕР±С‰РµРЅРёСЏ.
+     * РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ СѓРєР°Р·Р°РЅРёСЏ, РѕС‚ РєРѕРіРѕ РѕС‚РїСЂР°РІР»РµРЅРѕ СЃРѕРѕР±С‰РµРЅРёРµ.
+     */
+    private String senderId;
+
+    /**
+     * РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СѓС‡Р°С‚РµР»СЏ СЃРѕРѕР±С‰РµРЅРёСЏ.
+     * РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ СѓРєР°Р·Р°РЅРёСЏ, РєРѕРјСѓ Р°РґСЂРµСЃРѕРІР°РЅРѕ СЃРѕРѕР±С‰РµРЅРёРµ.
+     */
+    private String recipientId;
+
+    /**
+     * РЎРѕРґРµСЂР¶РёРјРѕРµ СЃРѕРѕР±С‰РµРЅРёСЏ.
+     * РҐСЂР°РЅРёС‚ С‚РµРєСЃС‚ РёР»Рё РґСЂСѓРіСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ, РїРµСЂРµРґР°РІР°РµРјСѓСЋ РѕС‚ РѕС‚РїСЂР°РІРёС‚РµР»СЏ Рє РїРѕР»СѓС‡Р°С‚РµР»СЋ.
+     */
+    private String content;
+}
+package org.example.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * РњРѕРґРµР»СЊ РґР»СЏ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅРѕРіРѕ СЃР»РѕРІР°.
+ * 
+ * РљР»Р°СЃСЃ РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРЅС„РѕСЂРјР°С†РёРё Рѕ СЃР»РѕРІР°С…, РєРѕС‚РѕСЂС‹Рµ РЅРµ РґРѕРїСѓСЃРєР°СЋС‚СЃСЏ РІ СЃРёСЃС‚РµРјРµ.
+ * РЎРѕРґРµСЂР¶РёС‚ РґРІР° РїРѕР»СЏ: РєР»СЋС‡ (СЃР°РјРѕ СЃР»РѕРІРѕ) Рё Р·РЅР°С‡РµРЅРёРµ (РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ Рѕ СЃР»РѕРІРµ).
+ * 
+ * РђРЅРЅРѕС‚Р°С†РёРё Lombok РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ РґР»СЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕР№ РіРµРЅРµСЂР°С†РёРё РјРµС‚РѕРґРѕРІ, С‚Р°РєРёС… РєР°Рє
+ * РіРµС‚С‚РµСЂС‹, СЃРµС‚С‚РµСЂС‹, РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹, equals, hashCode Рё toString.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RestrictedWord {
+
+    /**
+     * РЈРЅРёРєР°Р»СЊРЅС‹Р№ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ СЃР»РѕРІР°.
+     * 
+     * РџРѕР»Рµ РїСЂРµРґСЃС‚Р°РІР»СЏРµС‚ СЃРѕР±РѕР№ СЃР»РѕРІРѕ, РєРѕС‚РѕСЂРѕРµ РїСЂРёРІРѕРґРёС‚СЃСЏ Рє РЅРёР¶РЅРµРјСѓ СЂРµРіРёСЃС‚СЂСѓ РґР»СЏ РѕР±РµСЃРїРµС‡РµРЅРёСЏ РєРѕРЅСЃРёСЃС‚РµРЅС‚РЅРѕСЃС‚Рё.
+     * РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РєР°Рє РєР»СЋС‡ РґР»СЏ РёРґРµРЅС‚РёС„РёРєР°С†РёРё Р·Р°РїСЂРµС‰С‘РЅРЅРѕРіРѕ СЃР»РѕРІР° РІ СЃРёСЃС‚РµРјРµ.
+     */
+    private String key;
+
+    /**
+     * Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ СЃР»РѕРІРµ.
+     * 
+     * РџРѕР»Рµ РјРѕР¶РµС‚ СЃРѕРґРµСЂР¶Р°С‚СЊ РѕРїРёСЃР°РЅРёРµ РїСЂРёС‡РёРЅС‹ Р·Р°РїСЂРµС‚Р° СЃР»РѕРІР°, РєРѕРЅС‚РµРєСЃС‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РёР»Рё
+     * Р»СЋР±С‹Рµ РґСЂСѓРіРёРµ РјРµС‚Р°РґР°РЅРЅС‹Рµ, СЃРІСЏР·Р°РЅРЅС‹Рµ СЃ СЌС‚РёРј СЃР»РѕРІРѕРј.
+     */
+    private String value;
+}
+package org.example.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+/**
+ * DTO (Data Transfer Object) РґР»СЏ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ РёРЅС„РѕСЂРјР°С†РёРё Рѕ Р±Р»РѕРєРёСЂРѕРІРєР°С… РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
+ * 
+ * Р”Р°РЅРЅС‹Р№ РєР»Р°СЃСЃ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С… Рѕ РїРѕР»СЊР·РѕРІР°С‚РµР»Рµ Рё СЃРїРёСЃРєРµ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РёРј РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+ * РЎРѕРґРµСЂР¶РёС‚ РґРІР° РїРѕР»СЏ: РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Рё СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+ * 
+ * РђРЅРЅРѕС‚Р°С†РёРё Lombok РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ РґР»СЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕР№ РіРµРЅРµСЂР°С†РёРё СЃС‚Р°РЅРґР°СЂС‚РЅС‹С… РјРµС‚РѕРґРѕРІ,
+ * С‚Р°РєРёС… РєР°Рє РіРµС‚С‚РµСЂС‹, СЃРµС‚С‚РµСЂС‹, РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹, equals, hashCode Рё toString.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserBlockInfo {
+
+    /**
+     * РЈРЅРёРєР°Р»СЊРЅС‹Р№ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
+     * 
+     * РџРѕР»Рµ РїСЂРµРґСЃС‚Р°РІР»СЏРµС‚ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ СЃРѕС…СЂР°РЅСЏСЋС‚СЃСЏ РґР°РЅРЅС‹Рµ Рѕ Р±Р»РѕРєРёСЂРѕРІРєР°С….
+     */
+    private String userId;
+
+    /**
+     * РЎРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     * 
+     * РџРѕР»Рµ СЃРѕРґРµСЂР¶РёС‚ СЃРїРёСЃРѕРє РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№, РєРѕС‚РѕСЂС‹С… РґР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РґРѕР±Р°РІРёР» РІ Р±Р»РѕРєРёСЂРѕРІРєСѓ.
+     * РњРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј, РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРёРєРѕРіРѕ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°Р».
+     */
+    private List<String> blockedUsers;
+}
+package org.example.serde;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serializer;
+
+import java.util.List;
+
+/**
+ * Р РµР°Р»РёР·Р°С†РёСЏ РёРЅС‚РµСЂС„РµР№СЃР° Serde РґР»СЏ СЂР°Р±РѕС‚С‹ СЃРѕ СЃРїРёСЃРєР°РјРё СЃС‚СЂРѕРє (List<String>) РІ Kafka.
+ * 
+ * Р”Р°РЅРЅС‹Р№ РєР»Р°СЃСЃ РїСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ РјРµС‚РѕРґС‹ СЃРµСЂРёР°Р»РёР·Р°С†РёРё Рё РґРµСЃРµСЂРёР°Р»РёР·Р°С†РёРё СЃРїРёСЃРєРѕРІ СЃС‚СЂРѕРє
+ * СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј Р±РёР±Р»РёРѕС‚РµРєРё Jackson РґР»СЏ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёСЏ РІ JSON Рё РѕР±СЂР°С‚РЅРѕ.
+ */
+public class ListSerde implements Serde<List<String>> {
+
+    /**
+     * Р­РєР·РµРјРїР»СЏСЂ ObjectMapper РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ JSON.
+     */
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * РњРµС‚РѕРґ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ СЃРµСЂРёР°Р»РёР·Р°С‚РѕСЂР°.
+     * 
+     * @return РЎРµСЂРёР°Р»РёР·Р°С‚РѕСЂ РґР»СЏ СЃРїРёСЃРєРѕРІ СЃС‚СЂРѕРє (List<String>).
+     */
+    @Override
+    public Serializer<List<String>> serializer() {
+        return (topic, data) -> {
+            try {
+                // РџСЂРѕРІРµСЂРєР° РЅР° null РґР»СЏ РїСЂРµРґРѕС‚РІСЂР°С‰РµРЅРёСЏ РѕС€РёР±РѕРє
+                if (data == null) {
+                    return null;
+                }
+                // РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ СЃРїРёСЃРєР° РІ JSON-Р±Р°Р№С‚С‹
+                return objectMapper.writeValueAsBytes(data);
+            } catch (Exception e) {
+                // Р“РµРЅРµСЂР°С†РёСЏ РёСЃРєР»СЋС‡РµРЅРёСЏ РІ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё СЃРµСЂРёР°Р»РёР·Р°С†РёРё
+                throw new RuntimeException("РћС€РёР±РєР° СЃРµСЂРёР°Р»РёР·Р°С†РёРё СЃРїРёСЃРєР°: " + e.getMessage(), e);
+            }
+        };
+    }
+
+    /**
+     * РњРµС‚РѕРґ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РґРµСЃРµСЂРёР°Р»РёР·Р°С‚РѕСЂР°.
+     * 
+     * @return Р”РµСЃРµСЂРёР°Р»РёР·Р°С‚РѕСЂ РґР»СЏ СЃРїРёСЃРєРѕРІ СЃС‚СЂРѕРє (List<String>).
+     */
+    @Override
+    public Deserializer<List<String>> deserializer() {
+        return (topic, data) -> {
+            try {
+                // РџСЂРѕРІРµСЂРєР° РЅР° null РёР»Рё РїСѓСЃС‚С‹Рµ РґР°РЅРЅС‹Рµ
+                if (data == null || data.length == 0) {
+                    return null;
+                }
+                // РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ JSON-Р±Р°Р№С‚РѕРІ РѕР±СЂР°С‚РЅРѕ РІ СЃРїРёСЃРѕРє СЃС‚СЂРѕРє
+                return objectMapper.readValue(data, new TypeReference<List<String>>() {});
+            } catch (Exception e) {
+                // Р“РµРЅРµСЂР°С†РёСЏ РёСЃРєР»СЋС‡РµРЅРёСЏ РІ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё РґРµСЃРµСЂРёР°Р»РёР·Р°С†РёРё
+                throw new RuntimeException("РћС€РёР±РєР° РґРµСЃРµСЂРёР°Р»РёР·Р°С†РёРё СЃРїРёСЃРєР°: " + e.getMessage(), e);
+            }
+        };
+    }
+}
+package org.example.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
+import org.example.model.UserBlockInfo;
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.StoreQueryParameters;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * РЎРµСЂРІРёСЃ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ СЃРїРёСЃРєР°РјРё Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+ * 
+ * РЎРѕРґРµСЂР¶РёС‚ РјРµС‚РѕРґС‹ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ, СѓРґР°Р»РµРЅРёСЏ, РїРѕР»СѓС‡РµРЅРёСЏ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№,
+ * Р° С‚Р°РєР¶Рµ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Kafka Рё State Store.
+ */
+@Service
+public class BlockedUsersService {
+
+    /**
+     * Р­РєР·РµРјРїР»СЏСЂ KafkaStreams РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ State Store.
+     */
+    private final KafkaStreams kafkaStreams;
+
+    /**
+     * KafkaTemplate РґР»СЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№ РІ Kafka.
+     */
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    /**
+     * РРјСЏ State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     */
+    private final String blockedUsersStore;
+
+    /**
+     * РќР°Р·РІР°РЅРёРµ С‚РѕРїРёРєР° Kafka РґР»СЏ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     */
+    private final String blockedUsersTopic;
+
+    /**
+     * ObjectMapper РґР»СЏ СЃРµСЂРёР°Р»РёР·Р°С†РёРё Рё РґРµСЃРµСЂРёР°Р»РёР·Р°С†РёРё JSON.
+     */
+    private final ObjectMapper objectMapper;
+
+    /**
+     * Р›РѕРіРіРµСЂ РґР»СЏ Р·Р°РїРёСЃРё РґРµР№СЃС‚РІРёР№ СЃРµСЂРІРёСЃР°.
+     */
+    private static final Logger logger = LoggerFactory.getLogger(BlockedUsersService.class);
+
+    /**
+     * РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ СЃРµСЂРІРёСЃР°.
+     * 
+     * @param kafkaStreams       Р­РєР·РµРјРїР»СЏСЂ KafkaStreams РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ State Store.
+     * @param kafkaTemplate      KafkaTemplate РґР»СЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№.
+     * @param blockedUsersStore  РРјСЏ State Store.
+     * @param blockedUsersTopic  РќР°Р·РІР°РЅРёРµ С‚РѕРїРёРєР° Kafka.
+     * @param objectMapper       ObjectMapper РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ JSON.
+     */
+    public BlockedUsersService(
+        KafkaStreams kafkaStreams,
+        KafkaTemplate<String, String> kafkaTemplate,
+        @Value("${kafka.stateStore.blockedUsersStore}") String blockedUsersStore,
+        @Value("${kafka.topic.blockedUsers}") String blockedUsersTopic,
+        ObjectMapper objectMapper
+    ) {
+        this.kafkaStreams = kafkaStreams;
+        this.kafkaTemplate = kafkaTemplate;
+        this.blockedUsersStore = blockedUsersStore;
+        this.blockedUsersTopic = blockedUsersTopic;
+        this.objectMapper = objectMapper;
+    }
+
+
+
+    /**
+     * РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РґР»СЏ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
+     * 
+     * @param recipientId ID РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
+     * @return РЎРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     */
+    public List<String> getBlockedUsers(String recipientId) {
+        try {
+            // РџРѕР»СѓС‡Р°РµРј РґРѕСЃС‚СѓРї Рє State Store (read-only)
+            ReadOnlyKeyValueStore<String, List<String>> store = kafkaStreams.store(
+                StoreQueryParameters.fromNameAndType(blockedUsersStore, QueryableStoreTypes.keyValueStore())
+            );
+
+            // Р’РѕР·РІСЂР°С‰Р°РµРј СЃРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РёР»Рё РїСѓСЃС‚РѕР№ СЃРїРёСЃРѕРє, РµСЃР»Рё РґР°РЅРЅС‹С… РЅРµС‚
+            List<String> blockedUsers = store.get(recipientId);
+            return blockedUsers != null ? blockedUsers : new ArrayList<>();
+        } catch (Exception e) {
+            throw new RuntimeException("РћС€РёР±РєР° РїСЂРё С‡С‚РµРЅРёРё СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РґР»СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: " + recipientId, e);
+        }
+    }
+
+    /**
+     * РџРѕР»СѓС‡РµРЅРёРµ РІСЃРµС… Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РІ СЃРёСЃС‚РµРјРµ.
+     * 
+     * @return РЎРїРёСЃРѕРє РІСЃРµС… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ Рё РёС… Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     */
+    public List<UserBlockInfo> getAllBlockedUsers() {
+        if (kafkaStreams.state() != KafkaStreams.State.RUNNING) {
+            String errorMsg = "Kafka Streams РЅРµ Р·Р°РїСѓС‰РµРЅ. РўРµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЃРµСЂРІРёСЃР°: " + kafkaStreams.state();
+            logger.error(errorMsg);
+            throw new IllegalStateException(errorMsg);
+        }
+
+        ReadOnlyKeyValueStore<String, List<String>> store;
+        try {
+            store = kafkaStreams.store(
+                StoreQueryParameters.fromNameAndType(blockedUsersStore, QueryableStoreTypes.keyValueStore())
+            );
+        } catch (Exception e) {
+            String errorMsg = "РћС€РёР±РєР° РїСЂРё РґРѕСЃС‚СѓРїРµ Рє State Store: " + blockedUsersStore;
+            logger.error(errorMsg, e);
+            throw new RuntimeException(errorMsg, e);
+        }
+
+        List<UserBlockInfo> allBlockedUsers = new ArrayList<>();
+        try (var iterator = store.all()) {
+            iterator.forEachRemaining(entry -> {
+                List<String> blockedList = entry.value != null ? entry.value : new ArrayList<>();
+                allBlockedUsers.add(new UserBlockInfo(entry.key, blockedList));
+            });
+
+        } catch (Exception e) {
+            String errorMsg = "РћС€РёР±РєР° РїСЂРё РїРѕР»СѓС‡РµРЅРёРё РІСЃРµС… Р±Р»РѕРєРёСЂРѕРІРѕРє РёР· State Store";
+            logger.error(errorMsg, e);
+            throw new RuntimeException(errorMsg, e);
+        }
+
+        return allBlockedUsers;
+    }
+}
+package org.example.service;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * РЎРµСЂРІРёСЃ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ СЃРїРёСЃРєРѕРј Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+ * 
+ * РџСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ РјРµС‚РѕРґС‹ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ, СѓРґР°Р»РµРЅРёСЏ Рё РїРѕР»СѓС‡РµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ,
+ * Р° С‚Р°РєР¶Рµ РІР·Р°РёРјРѕРґРµР№СЃС‚РІСѓРµС‚ СЃ Kafka РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё СЃРѕР±С‹С‚РёР№ РёР·РјРµРЅРµРЅРёСЏ СЃРїРёСЃРєР°.
+ */
+@Service
+public class RestrictedWordsService {
+
+    /**
+     * KafkaTemplate РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№ РІ Kafka.
+     */
+    private final KafkaTemplate<String, String> kafkaTemplate;
+       /**
+     * Р›РѕРіРіРµСЂ РґР»СЏ Р·Р°РїРёСЃРё РґРµР№СЃС‚РІРёР№ СЃРµСЂРІРёСЃР°.
+     */
+    private static final Logger logger = LoggerFactory.getLogger(BlockedUsersService.class);
+
+    /**
+     * РќР°Р·РІР°РЅРёРµ С‚РѕРїРёРєР° Kafka РґР»СЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     */
+    @Value("${kafka.topic.restrictedWords}")
+    private String restrictedWordsTopic;
+
+    /**
+     * Р›РѕРєР°Р»СЊРЅС‹Р№ РєРµС€ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     * РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ РѕРїРµСЂР°С†РёР№ С‡С‚РµРЅРёСЏ.
+     */
+    private final Set<String> restrictedWords = Collections.synchronizedSet(new HashSet<>());
+
+    /**
+     * РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ СЃРµСЂРІРёСЃР°.
+     * 
+     * @param kafkaTemplate Р­РєР·РµРјРїР»СЏСЂ KafkaTemplate РґР»СЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№ РІ Kafka.
+     */
+    public RestrictedWordsService(KafkaTemplate<String, String> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    /**
+     * Р”РѕР±Р°РІР»СЏРµС‚ РЅРѕРІРѕРµ Р·Р°РїСЂРµС‰С‘РЅРЅРѕРµ СЃР»РѕРІРѕ.
+     * 
+     * @param word РЎР»РѕРІРѕ, РєРѕС‚РѕСЂРѕРµ РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РІ СЃРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С….
+     *             РћС‚РїСЂР°РІР»СЏРµС‚ СЃРѕР±С‹С‚РёРµ РІ Kafka СЃ РєР»СЋС‡РѕРј СЃР»РѕРІР° Рё Р·РЅР°С‡РµРЅРёРµРј "ADD".
+     */
+    public void addWord(String word) {
+        // РћР±РЅРѕРІР»СЏРµРј Р»РѕРєР°Р»СЊРЅС‹Р№ РєРµС€
+        restrictedWords.add(word);
+        logger.info("РЎР»РѕРІРѕ '{}' РґРѕР±Р°РІР»РµРЅРѕ РІ Р»РѕРєР°Р»СЊРЅС‹Р№ РєРµС€.", word);
+
+        // РћС‚РїСЂР°РІР»СЏРµРј СЃРѕР±С‹С‚РёРµ РґРѕР±Р°РІР»РµРЅРёСЏ СЃР»РѕРІР° РІ Kafka
+        kafkaTemplate.send(restrictedWordsTopic, word, "ADD");
+        logger.info("РЎРѕР±С‹С‚РёРµ 'ADD' РґР»СЏ СЃР»РѕРІР° '{}' РѕС‚РїСЂР°РІР»РµРЅРѕ РІ Kafka.", word);
+    }
+
+    /**
+     * РЈРґР°Р»СЏРµС‚ Р·Р°РїСЂРµС‰С‘РЅРЅРѕРµ СЃР»РѕРІРѕ РёР· СЃРїРёСЃРєР°.
+     * 
+     * @param word РЎР»РѕРІРѕ, РєРѕС‚РѕСЂРѕРµ РЅСѓР¶РЅРѕ СѓРґР°Р»РёС‚СЊ РёР· СЃРїРёСЃРєР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С….
+     *             РћС‚РїСЂР°РІР»СЏРµС‚ СЃРѕР±С‹С‚РёРµ РІ Kafka СЃ РєР»СЋС‡РѕРј СЃР»РѕРІР° Рё Р·РЅР°С‡РµРЅРёРµРј null.
+     */
+    public void deleteWord(String word) {
+        // РћР±РЅРѕРІР»СЏРµРј Р»РѕРєР°Р»СЊРЅС‹Р№ РєРµС€
+        restrictedWords.remove(word);
+        logger.info("РЎР»РѕРІРѕ '{}' СѓРґР°Р»РµРЅРѕ РёР· Р»РѕРєР°Р»СЊРЅРѕРіРѕ РєРµС€Р°.", word);
+
+        // РћС‚РїСЂР°РІР»СЏРµРј СЃРѕР±С‹С‚РёРµ СѓРґР°Р»РµРЅРёСЏ СЃР»РѕРІР° РІ Kafka
+        kafkaTemplate.send(restrictedWordsTopic, word, null);
+        logger.info("РЎРѕР±С‹С‚РёРµ 'DELETE' РґР»СЏ СЃР»РѕРІР° '{}' РѕС‚РїСЂР°РІР»РµРЅРѕ РІ Kafka.", word);
+    }
+
+    /**
+     * Р’РѕР·РІСЂР°С‰Р°РµС‚ С‚РµРєСѓС‰РёР№ СЃРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     * 
+     * @return РќРµРІРѕР·РјРѕР¶РЅС‹Р№ РґР»СЏ РёР·РјРµРЅРµРЅРёСЏ РЅР°Р±РѕСЂ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ, С…СЂР°РЅСЏС‰РёР№СЃСЏ РІ Р»РѕРєР°Р»СЊРЅРѕРј РєРµС€Рµ.
+     */
+    public Set<String> getRestrictedWords() {
+        // Р’РѕР·РІСЂР°С‰Р°РµРј РєРѕРїРёСЋ РЅР°Р±РѕСЂР° РґР»СЏ РїСЂРµРґРѕС‚РІСЂР°С‰РµРЅРёСЏ РјРѕРґРёС„РёРєР°С†РёР№ РёР·РІРЅРµ
+        return Collections.unmodifiableSet(restrictedWords);
+    }
+
+        /**
+     * РњРµС‚РѕРґ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РёР·РјРµРЅРµРЅРёР№ РёР· Kafka.
+     * РЎРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµС‚ Р»РѕРєР°Р»СЊРЅС‹Р№ РєРµС€ СЃ РёР·РјРµРЅРµРЅРёСЏРјРё, РїРѕСЃС‚СѓРїРёРІС€РёРјРё С‡РµСЂРµР· СЃРѕР±С‹С‚РёСЏ Kafka.
+     * 
+     * @param word  РЎР»РѕРІРѕ, РєРѕС‚РѕСЂРѕРµ РЅСѓР¶РЅРѕ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ.
+     * @param event РўРёРї СЃРѕР±С‹С‚РёСЏ ("ADD" РёР»Рё "DELETE").
+     */
+    public void handleKafkaEvent(String word, String event) {
+        if ("ADD".equalsIgnoreCase(event)) {
+            restrictedWords.add(word);
+            logger.info("РЎР»РѕРІРѕ '{}' РґРѕР±Р°РІР»РµРЅРѕ РІ Р»РѕРєР°Р»СЊРЅС‹Р№ РєРµС€ РїСЂРёР»РѕР¶РµРЅРёСЏ РёР· Kafka.", word);
+        } else if (event == null || "DELETE".equalsIgnoreCase(event)) {
+            restrictedWords.remove(word);
+            logger.info("РЎР»РѕРІРѕ '{}' СѓРґР°Р»РµРЅРѕ РёР· Р»РѕРєР°Р»СЊРЅРѕРіРѕ РєРµС€Р° РїСЂРёР»РѕР¶РµРЅРёСЏ РёР· Kafka.", word);
+        } else {
+            logger.warn("РќРµРёР·РІРµСЃС‚РЅРѕРµ СЃРѕР±С‹С‚РёРµ Kafka РґР»СЏ СЃР»РѕРІР° '{}': {}", word, event);
+        }
+    }
+}
+package org.example.topology;
+
+import org.apache.kafka.streams.processor.PunctuationType;
+import org.apache.kafka.streams.processor.api.*;
+import org.apache.kafka.streams.state.KeyValueIterator;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.example.model.MessageModel;
+import org.apache.kafka.streams.processor.api.Record;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
+import org.apache.kafka.streams.KeyValue;
+
+/**
+ * РџСЂРѕС†РµСЃСЃРѕСЂ РґР»СЏ С„РёР»СЊС‚СЂР°С†РёРё Рё С†РµРЅР·СѓСЂС‹ СЃРѕРѕР±С‰РµРЅРёР№.
+ * 
+ * РћСЃРЅРѕРІРЅС‹Рµ Р·Р°РґР°С‡Рё:
+ * - РџСЂРѕРІРµСЂРєР°, Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ Р»Рё РѕС‚РїСЂР°РІРёС‚РµР»СЊ Сѓ РїРѕР»СѓС‡Р°С‚РµР»СЏ.
+ * - Р¦РµРЅР·СѓСЂР° СЃРѕРѕР±С‰РµРЅРёР№, СЃРѕРґРµСЂР¶Р°С‰РёС… Р·Р°РїСЂРµС‰С‘РЅРЅС‹Рµ СЃР»РѕРІР°.
+ * - РџРµСЂРёРѕРґРёС‡РµСЃРєРѕРµ РѕР±РЅРѕРІР»РµРЅРёРµ РїР°С‚С‚РµСЂРЅР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ РёР· С…СЂР°РЅРёР»РёС‰Р°.
+ */
+public class BlockAndCensorProcessor extends ContextualProcessor<String, MessageModel, String, MessageModel> {
+
+    /** Р›РѕРіРіРµСЂ РґР»СЏ Р·Р°РїРёСЃРё РґРµР№СЃС‚РІРёР№ РїСЂРѕС†РµСЃСЃРѕСЂР°. */
+    private static final Logger logger = LoggerFactory.getLogger(BlockAndCensorProcessor.class);
+
+    /** РРјСЏ State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРЅС„РѕСЂРјР°С†РёРё Рѕ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»СЏС…. */
+    private final String blockedUsersStoreName;
+
+    /** РРјСЏ State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ. */
+    private final String restrictedWordsStoreName;
+
+    /** РџСЂРµРґС‹РґСѓС‰РёР№ СЃРїРёСЃРѕРє Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ (РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ РёР·РјРµРЅРµРЅРёР№). */
+    private Set<String> previousForbiddenWords = new HashSet<>();
+
+    /** State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№. */
+    private KeyValueStore<String, List<String>> blockedUsersStore;
+
+    /** State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ. */
+    private KeyValueStore<String, String> restrictedWordsStore;
+
+    /** РљРѕРјРїРёР»РёСЂРѕРІР°РЅРЅС‹Р№ РїР°С‚С‚РµСЂРЅ РґР»СЏ РїСЂРѕРІРµСЂРєРё Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ. */
+    private Pattern forbiddenWordsPattern;
+
+    /**
+     * РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїСЂРѕС†РµСЃСЃРѕСЂР°.
+     * 
+     * @param blockedUsersStoreName    РРјСЏ С…СЂР°РЅРёР»РёС‰Р° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     * @param restrictedWordsStoreName РРјСЏ С…СЂР°РЅРёР»РёС‰Р° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     */
+    public BlockAndCensorProcessor(String blockedUsersStoreName, String restrictedWordsStoreName) {
+        this.blockedUsersStoreName = blockedUsersStoreName;
+        this.restrictedWordsStoreName = restrictedWordsStoreName;
+    }
+
+    /**
+     * РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїСЂРѕС†РµСЃСЃРѕСЂР°.
+     * 
+     * @param context РљРѕРЅС‚РµРєСЃС‚ РїСЂРѕС†РµСЃСЃРѕСЂР°, РїСЂРµРґРѕСЃС‚Р°РІР»СЏСЋС‰РёР№ РґРѕСЃС‚СѓРї Рє State Store.
+     */
+    @Override
+    public void init(ProcessorContext<String, MessageModel> context) {
+        super.init(context);
+        this.blockedUsersStore = context.getStateStore(blockedUsersStoreName);
+        this.restrictedWordsStore = context.getStateStore(restrictedWordsStoreName);
+        updateForbiddenWordsPattern();
+
+        // РџР»Р°РЅРёСЂСѓРµРј РїРµСЂРёРѕРґРёС‡РµСЃРєРѕРµ РѕР±РЅРѕРІР»РµРЅРёРµ РїР°С‚С‚РµСЂРЅР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ
+        context.schedule(
+            java.time.Duration.ofSeconds(1),
+            PunctuationType.WALL_CLOCK_TIME,
+            timestamp -> updateForbiddenWordsPattern()
+        );
+    }
+
+    /**
+     * РћСЃРЅРѕРІРЅРѕР№ РјРµС‚РѕРґ РѕР±СЂР°Р±РѕС‚РєРё СЃРѕРѕР±С‰РµРЅРёР№.
+     * 
+     * @param record РЎРѕРѕР±С‰РµРЅРёРµ, РїРѕР»СѓС‡РµРЅРЅРѕРµ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё.
+     */
+    @Override
+    public void process(Record<String, MessageModel> record) {
+        logger.info("РћР±СЂР°Р±Р°С‚С‹РІР°РµС‚СЃСЏ СЃРѕРѕР±С‰РµРЅРёРµ: {}", record.value());
+        MessageModel message = record.value();
+
+        if (message == null || message.getSenderId() == null || message.getContent() == null) {
+            logger.warn("РќРµРєРѕСЂСЂРµРєС‚РЅРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ. РџСЂРѕРїСѓСЃРєР°РµРј.");
+            return;
+        }
+
+        String senderId = message.getSenderId();
+        String recipientId = message.getRecipientId();
+        String content = message.getContent();
+
+        // РџСЂРѕРІРµСЂСЏРµРј, Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ Р»Рё РѕС‚РїСЂР°РІРёС‚РµР»СЊ Сѓ РїРѕР»СѓС‡Р°С‚РµР»СЏ
+        List<String> blockedUsers = blockedUsersStore.get(recipientId);
+
+
+        if (blockedUsers != null && blockedUsers.contains(senderId)) {
+            logger.info("РџРѕР»СѓС‡Р°С‚РµР»СЊ {} Р·Р°Р±Р»РѕРєРёСЂРѕРІР» РѕС‚РїСЂР°РІРёС‚РµР»СЏ {}. Р‘Р»РѕРєРёСЂСѓРµРј СЃРѕРѕР±С‰РµРЅРёРµ: '{}'.", recipientId,senderId, content);
+            return;
+        }
+
+        // Р¦РµРЅР·СѓСЂР° СЃРѕРґРµСЂР¶Р°РЅРёСЏ СЃРѕРѕР±С‰РµРЅРёСЏ
+        if (forbiddenWordsPattern != null) {
+            String censoredContent = forbiddenWordsPattern.matcher(content).replaceAll("****");
+            if (!censoredContent.equals(content)) {
+                logger.info("РЎРѕРѕР±С‰РµРЅРёРµ РѕС‚С†РµРЅР·СѓСЂРёСЂРѕРІР°РЅРѕ: '{}' -> '{}'", content, censoredContent);
+                message.setContent(censoredContent);
+            } else {
+                logger.info("РЎРѕРѕР±С‰РµРЅРёРµ: '{}'' РЅРµ СЃРѕРґРµСЂР¶РёС‚ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.",content);
+            }
+        }
+
+        // РћС‚РїСЂР°РІР»СЏРµРј СЃРѕРѕР±С‰РµРЅРёРµ РґР°Р»СЊС€Рµ РІ С‚РѕРїРёРє
+        context().forward(record.withValue(message));
+    }
+
+    /**
+     * РњРµС‚РѕРґ Р·Р°РєСЂС‹С‚РёСЏ РїСЂРѕС†РµСЃСЃРѕСЂР°.
+     * Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё Р·Р°РІРµСЂС€РµРЅРёРё СЂР°Р±РѕС‚С‹.
+     */
+    @Override
+    public void close() {
+        // Р—Р°РєСЂС‹С‚РёРµ СЂРµСЃСѓСЂСЃРѕРІ, РµСЃР»Рё С‚СЂРµР±СѓРµС‚СЃСЏ
+    }
+
+    /**
+     * РћР±РЅРѕРІР»СЏРµС‚ РїР°С‚С‚РµСЂРЅ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ РЅР° РѕСЃРЅРѕРІРµ РґР°РЅРЅС‹С… РёР· State Store.
+     */
+    private void updateForbiddenWordsPattern() {
+        try {
+            Set<String> currentForbiddenWords = new HashSet<>();
+            try (KeyValueIterator<String, String> iterator = restrictedWordsStore.all()) {
+                while (iterator.hasNext()) {
+                    KeyValue<String, String> entry = iterator.next();
+                    String key = entry.key.toLowerCase();
+                    String value = entry.value;
+    
+                    // РџСЂРѕРїСѓСЃРєР°РµРј СЃР»РѕРІР°, РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ null РёР»Рё СЂР°РІРЅРѕ "DELETE"
+                    if (value != null && !value.equalsIgnoreCase("DELETE")) {
+                        currentForbiddenWords.add(key);
+                    } else {
+                        logger.info("Р—Р°РїСЂРµС‰РµРЅРЅРѕРµ СЃР»РѕРІРѕ '{}' РёСЃРєР»СЋС‡С‘РЅРѕ РёР· С„РёР»СЊС‚СЂР°С†РёРё РёР·-Р·Р° РїСЂРёР·РЅР°РєР° СѓРґР°Р»РµРЅРёСЏ (С‚РѕРјР±СЃС‚РѕСѓРЅР°): {}", key, value);
+                    }
+                }
+            }
+
+            if (!currentForbiddenWords.equals(previousForbiddenWords)) {
+                // РћРїСЂРµРґРµР»СЏРµРј РґРѕР±Р°РІР»РµРЅРЅС‹Рµ Рё СѓРґР°Р»С‘РЅРЅС‹Рµ СЃР»РѕРІР°
+                Set<String> addedWords = new HashSet<>(currentForbiddenWords);
+                addedWords.removeAll(previousForbiddenWords);
+
+                Set<String> removedWords = new HashSet<>(previousForbiddenWords);
+                removedWords.removeAll(currentForbiddenWords);
+
+                // Р›РѕРіРёСЂСѓРµРј РёР·РјРµРЅРµРЅРёСЏ
+                if (!addedWords.isEmpty()) {
+                    logger.info("Р’ Р»РѕРєР°Р»СЊРЅС‹Р№ РєРµС€ РїСЂРёР»РѕР¶РµРЅРёСЏ Р±С‹Р»Рё РґРѕР±Р°РІР»РµРЅС‹ Р·Р°РїСЂРµС‰С‘РЅРЅС‹Рµ СЃР»РѕРІР°: {}", addedWords);
+                }
+                if (!removedWords.isEmpty()) {
+                    logger.info("Р’ Р»РѕРєР°Р»СЊРЅРѕРј РєРµС€ РїСЂРёР»РѕР¶РµРЅРёСЏ Р±С‹Р»Рё СѓРґР°Р»РµРЅС‹ Р·Р°РїСЂРµС‰С‘РЅРЅС‹Рµ СЃР»РѕРІР°: {}", removedWords);
+                }
+
+                // РћР±РЅРѕРІР»СЏРµРј РїР°С‚С‚РµСЂРЅ
+                previousForbiddenWords = currentForbiddenWords;
+                if (!currentForbiddenWords.isEmpty()) {
+                    String regex = "\\b(" + String.join("|", currentForbiddenWords) + ")\\b";
+                    forbiddenWordsPattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+                    logger.info("РћР±РЅРѕРІР»С‘РЅ РїР°С‚С‚РµСЂРЅ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ: {}", currentForbiddenWords);
+                } else {
+                    forbiddenWordsPattern = null;
+                    logger.info("Р›РћРєР°Р»СЊРЅС‹Р№ РєРµС€ РїСЂРёР»РѕР¶РµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ РїСѓСЃС‚.");
+                }
+            }
+        } catch (Exception e) {
+            logger.error("РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РїР°С‚С‚РµСЂРЅР° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.", e);
+        }
+    }
+}
+package org.example.topology;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * РџСЂРѕС†РµСЃСЃРѕСЂ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ СЃРїРёСЃРєР°РјРё Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+ * 
+ * РћСЃРЅРѕРІРЅС‹Рµ С„СѓРЅРєС†РёРё:
+ * - РћР±СЂР°Р±РѕС‚РєР° РІС…РѕРґСЏС‰РёС… Р·Р°РїРёСЃРµР№ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РёР»Рё СѓРґР°Р»РµРЅРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РёР· СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С….
+ * - РЎРѕС…СЂР°РЅРµРЅРёРµ РѕР±РЅРѕРІР»РµРЅРёР№ РІ State Store.
+ */
+public class BlockedUsersProcessor implements Processor<String, List<String>, Void, Void> {
+
+    /** Р›РѕРіРіРµСЂ РґР»СЏ Р·Р°РїРёСЃРё РґРµР№СЃС‚РІРёР№ РїСЂРѕС†РµСЃСЃРѕСЂР°. */
+    private static final Logger logger = LoggerFactory.getLogger(BlockedUsersProcessor.class);
+
+    /** РРјСЏ State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЃРїРёСЃРєРѕРІ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№. */
+    private final String stateStoreName;
+
+    /** State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЃРїРёСЃРєРѕРІ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№. */
+    private KeyValueStore<String, List<String>> stateStore;
+
+    /**
+     * РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїСЂРѕС†РµСЃСЃРѕСЂР°.
+     * 
+     * @param stateStoreName РРјСЏ State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     */
+    public BlockedUsersProcessor(String stateStoreName) {
+        this.stateStoreName = stateStoreName;
+    }
+
+    /**
+     * РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїСЂРѕС†РµСЃСЃРѕСЂР°.
+     * 
+     * @param context РљРѕРЅС‚РµРєСЃС‚ РїСЂРѕС†РµСЃСЃРѕСЂР°, РїСЂРµРґРѕСЃС‚Р°РІР»СЏСЋС‰РёР№ РґРѕСЃС‚СѓРї Рє State Store.
+     */
+    @Override
+    public void init(ProcessorContext<Void, Void> context) {
+        this.stateStore = context.getStateStore(stateStoreName);
+    }
+
+    /**
+     * РћР±СЂР°Р±РѕС‚РєР° РІС…РѕРґСЏС‰РёС… Р·Р°РїРёСЃРµР№.
+     * 
+     * @param record Р—Р°РїРёСЃСЊ, СЃРѕРґРµСЂР¶Р°С‰Р°СЏ РєР»СЋС‡ Рё СЃРїРёСЃРѕРє РёР·РјРµРЅРµРЅРёР№ (РґРѕР±Р°РІР»РµРЅРёРµ РёР»Рё СѓРґР°Р»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№).
+     */
+    @Override
+    public void process(Record<String, List<String>> record) {
+        if (record.key() == null) {
+            logger.warn("РџРѕР»СѓС‡РµРЅР° Р·Р°РїРёСЃСЊ СЃ null РєР»СЋС‡РѕРј. РџСЂРѕРїСѓСЃРєР°РµРј.");
+            return;
+        }
+
+        String key = record.key();
+        List<String> incomingUsers = record.value();
+
+        if (incomingUsers == null || incomingUsers.isEmpty()) {
+            logger.warn("РџРѕР»СѓС‡РµРЅ РїСѓСЃС‚РѕР№ РёР»Рё null СЃРїРёСЃРѕРє РґР»СЏ РєР»СЋС‡Р° '{}'. РџСЂРѕРїСѓСЃРєР°РµРј Р·Р°РїРёСЃСЊ.", key);
+            return;
+        }
+
+        // РџРѕР»СѓС‡Р°РµРј С‚РµРєСѓС‰РёР№ СЃРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+        List<String> blockedUsersList = getBlockedUsersFromStore(key);
+
+        // Р¤Р»Р°Рі РґР»СЏ РїСЂРѕРІРµСЂРєРё, Р±С‹Р»Рё Р»Рё РёР·РјРµРЅРµРЅРёСЏ
+        boolean isUpdated = false;
+
+        for (String user : incomingUsers) {
+            if (user.startsWith("DELETE:")) {
+                // РЈРґР°Р»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РёР· СЃРїРёСЃРєР°
+                String userToRemove = user.replaceFirst("DELETE:", "").trim();
+                if (blockedUsersList.remove(userToRemove)) {
+                    logger.info("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ '{}' СѓРґР°Р»С‘РЅ РёР· СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РґР»СЏ РєР»СЋС‡Р° '{}'.", userToRemove, key);
+                    isUpdated = true;
+                } else {
+                    logger.info("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ '{}' РЅРµ РЅР°Р№РґРµРЅ РІ СЃРїРёСЃРєРµ РґР»СЏ РєР»СЋС‡Р° '{}'.", userToRemove, key);
+                }
+            } else {
+                // Р”РѕР±Р°РІР»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РІ СЃРїРёСЃРѕРє
+                if (!blockedUsersList.contains(user)) {
+                    blockedUsersList.add(user);
+                    logger.info("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ '{}' РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РґР»СЏ РєР»СЋС‡Р° '{}'.", user, key);
+                    isUpdated = true;
+                } else {
+                    logger.info("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ '{}' СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РґР»СЏ РєР»СЋС‡Р° '{}'.", user, key);
+                }
+            }
+        }
+
+        // РЎРѕС…СЂР°РЅСЏРµРј РёР·РјРµРЅРµРЅРёСЏ С‚РѕР»СЊРєРѕ РµСЃР»Рё Р±С‹Р»Рё РѕР±РЅРѕРІР»РµРЅРёСЏ
+        if (isUpdated) {
+            saveBlockedUsersToStore(key, blockedUsersList);
+        }
+    }
+
+    /**
+     * Р—Р°РєСЂС‹С‚РёРµ РїСЂРѕС†РµСЃСЃРѕСЂР°.
+     * Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё Р·Р°РІРµСЂС€РµРЅРёРё СЂР°Р±РѕС‚С‹.
+     */
+    @Override
+    public void close() {
+        // РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ СЂРµСЃСѓСЂСЃРѕРІ, РµСЃР»Рё С‚СЂРµР±СѓРµС‚СЃСЏ
+    }
+
+    /**
+     * РџРѕР»СѓС‡РµРЅРёРµ С‚РµРєСѓС‰РµРіРѕ СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РёР· State Store.
+     * 
+     * @param key РљР»СЋС‡ РґР»СЏ РёРґРµРЅС‚РёС„РёРєР°С†РёРё СЃРїРёСЃРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     * @return РЎРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РґР»СЏ СѓРєР°Р·Р°РЅРЅРѕРіРѕ РєР»СЋС‡Р°.
+     */
+    private List<String> getBlockedUsersFromStore(String key) {
+        List<String> blockedUsers = stateStore.get(key);
+        if (blockedUsers == null) {
+            return new ArrayList<>();
+        }
+        return blockedUsers;
+    }
+
+    /**
+     * РЎРѕС…СЂР°РЅРµРЅРёРµ РѕР±РЅРѕРІР»С‘РЅРЅРѕРіРѕ СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РІ State Store.
+     * 
+     * @param key              РљР»СЋС‡ РґР»СЏ РёРґРµРЅС‚РёС„РёРєР°С†РёРё СЃРїРёСЃРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     * @param blockedUsersList РћР±РЅРѕРІР»С‘РЅРЅС‹Р№ СЃРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     */
+    private void saveBlockedUsersToStore(String key, List<String> blockedUsersList) {
+        stateStore.put(key, blockedUsersList);
+        logger.debug("РћР±РЅРѕРІР»С‘РЅ СЃРїРёСЃРѕРє Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РґР»СЏ РєР»СЋС‡Р° '{}': {}", key, blockedUsersList);
+    }
+}
+package org.example.topology;
+
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.support.serializer.JsonSerde;
+import org.example.model.MessageModel;
+
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * РљРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Р№ РєР»Р°СЃСЃ РґР»СЏ СЃР±РѕСЂРєРё С‚РѕРїРѕР»РѕРіРёРё Kafka Streams.
+ * 
+ * РўРѕРїРѕР»РѕРіРёСЏ РІРєР»СЋС‡Р°РµС‚ РІ СЃРµР±СЏ РёСЃС‚РѕС‡РЅРёРєРё РґР°РЅРЅС‹С…, РїСЂРѕС†РµСЃСЃРѕСЂС‹, С…СЂР°РЅРёР»РёС‰Р° СЃРѕСЃС‚РѕСЏРЅРёР№ (State Stores) Рё РєРѕРЅРµС‡РЅС‹Рµ С‚РѕС‡РєРё (Sinks).
+ * РћР±СЂР°Р±Р°С‚С‹РІР°РµС‚ СЃРѕРѕР±С‰РµРЅРёСЏ, Р±Р»РѕРєРёСЂСѓРµС‚ РѕС‚РїСЂР°РІРёС‚РµР»РµР№, РїСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ Рё С†РµРЅР·СѓСЂРёСЂСѓРµС‚ СЃРѕРѕР±С‰РµРЅРёСЏ.
+ */
+@Configuration
+public class MyTopologyBuilder {
+
+    /** РўРѕРїРёРє СЃ РёСЃС…РѕРґРЅС‹РјРё СЃРѕРѕР±С‰РµРЅРёСЏРјРё. */
+    @Value("${kafka.topic.messages}")
+    private String messagesTopic;
+
+    /** РўРѕРїРёРє РґР»СЏ С„РёР»СЊС‚СЂРѕРІР°РЅРЅС‹С… СЃРѕРѕР±С‰РµРЅРёР№. */
+    @Value("${kafka.topic.filteredMessages}")
+    private String filteredMessagesTopic;
+
+    /** РўРѕРїРёРє СЃ РёРЅС„РѕСЂРјР°С†РёРµР№ Рѕ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»СЏС…. */
+    @Value("${kafka.topic.blockedUsers}")
+    private String blockedUsersTopic;
+
+    /** РўРѕРїРёРє СЃ Р·Р°РїСЂРµС‰С‘РЅРЅС‹РјРё СЃР»РѕРІР°РјРё. */
+    @Value("${kafka.topic.restrictedWords}")
+    private String restrictedWordsTopic;
+
+    /** РРјСЏ State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№. */
+    @Value("${kafka.stateStore.blockedUsersStore}")
+    private String blockedUsersStore;
+
+    /** РРјСЏ State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ. */
+    @Value("${kafka.stateStore.restrictedWordsStore}")
+    private String restrictedWordsStore;
+
+    /**
+     * РЎР±РѕСЂРєР° С‚РѕРїРѕР»РѕРіРёРё Kafka Streams.
+     * 
+     * @return РЎРєРѕРЅС„РёРіСѓСЂРёСЂРѕРІР°РЅРЅР°СЏ С‚РѕРїРѕР»РѕРіРёСЏ.
+     */
+    @Bean("myProcessorTopology")
+    public Topology buildTopology() {
+        Topology topology = new Topology();
+
+        // РќР°СЃС‚СЂРѕР№РєР° Serde РґР»СЏ СЃРµСЂРёР°Р»РёР·Р°С†РёРё/РґРµСЃРµСЂРёР°Р»РёР·Р°С†РёРё List<String>
+        JsonSerde<List<String>> blockedUsersSerde = new JsonSerde<>();
+        blockedUsersSerde.configure(
+            Collections.singletonMap("spring.json.value.default.type", "java.util.List"),
+            false
+        );
+
+        // РСЃС‚РѕС‡РЅРёРєРё (Sources): РґРѕР±Р°РІР»СЏРµРј С‚РѕРїРёРєРё, РѕС‚РєСѓРґР° РїРѕСЃС‚СѓРїР°СЋС‚ РґР°РЅРЅС‹Рµ
+        topology.addSource("BlockedUsersSource", Serdes.String().deserializer(), blockedUsersSerde.deserializer(), blockedUsersTopic);
+        topology.addSource("RestrictedWordsSource", Serdes.String().deserializer(), Serdes.String().deserializer(), restrictedWordsTopic);
+        topology.addSource("MessagesSource", Serdes.String().deserializer(), new JsonSerde<>(MessageModel.class).deserializer(), messagesTopic);
+
+        // РџСЂРѕС†РµСЃСЃРѕСЂС‹ (Processors): РґРѕР±Р°РІР»СЏРµРј РѕР±СЂР°Р±РѕС‚С‡РёРєРё РґР»СЏ РёСЃС‚РѕС‡РЅРёРєРѕРІ
+        topology.addProcessor("BlockedUsersProcessor", () -> new BlockedUsersProcessor(blockedUsersStore), "BlockedUsersSource");
+        topology.addProcessor("RestrictedWordsProcessor", () -> new RestrictedWordsProcessor(restrictedWordsStore), "RestrictedWordsSource");
+        topology.addProcessor("BlockAndCensorProcessor", () -> new BlockAndCensorProcessor(blockedUsersStore, restrictedWordsStore), "MessagesSource");
+
+        // РҐСЂР°РЅРёР»РёС‰Р° СЃРѕСЃС‚РѕСЏРЅРёР№ (State Stores): РґРѕР±Р°РІР»СЏРµРј State Store РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РґР°РЅРЅС‹С… РІ РїСЂРѕС†РµСЃСЃРѕСЂР°С…
+        StoreBuilder<KeyValueStore<String, List<String>>> blockedUsersStoreBuilder = StoresFactory.blockedUsersStoreBuilder(blockedUsersStore);
+        StoreBuilder<KeyValueStore<String, String>> restrictedWordsStoreBuilder = StoresFactory.restrictedWordsStoreBuilder(restrictedWordsStore);
+
+        topology.addStateStore(blockedUsersStoreBuilder, "BlockedUsersProcessor", "BlockAndCensorProcessor");
+        topology.addStateStore(restrictedWordsStoreBuilder, "RestrictedWordsProcessor", "BlockAndCensorProcessor");
+
+        // РЎРёРЅРє (Sink): РґРѕР±Р°РІР»СЏРµРј РєРѕРЅРµС‡РЅСѓСЋ С‚РѕС‡РєСѓ РґР»СЏ С„РёР»СЊС‚СЂРѕРІР°РЅРЅС‹С… СЃРѕРѕР±С‰РµРЅРёР№
+        topology.addSink("FilteredSink", filteredMessagesTopic, Serdes.String().serializer(), new JsonSerde<>(MessageModel.class).serializer(), "BlockAndCensorProcessor");
+
+        return topology;
+    }
+}
+package org.example.topology;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
+import org.apache.kafka.streams.state.KeyValueIterator;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * РџСЂРѕС†РµСЃСЃРѕСЂ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ СЃРїРёСЃРєРѕРј Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+ * 
+ * РћСЃРЅРѕРІРЅС‹Рµ Р·Р°РґР°С‡Рё:
+ * - Р”РѕР±Р°РІР»РµРЅРёРµ РЅРѕРІС‹С… Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ РІ С…СЂР°РЅРёР»РёС‰Рµ.
+ * - РЈРґР°Р»РµРЅРёРµ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ РёР· С…СЂР°РЅРёР»РёС‰Р°.
+ * - Р›РѕРіРёСЂРѕРІР°РЅРёРµ С‚РµРєСѓС‰РµРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ С…СЂР°РЅРёР»РёС‰Р°.
+ */
+public class RestrictedWordsProcessor implements Processor<String, String, Void, Void> {
+
+    /** Р›РѕРіРіРµСЂ РґР»СЏ Р·Р°РїРёСЃРё РґРµР№СЃС‚РІРёР№ РїСЂРѕС†РµСЃСЃРѕСЂР°. */
+    private static final Logger logger = LoggerFactory.getLogger(RestrictedWordsProcessor.class);
+
+    /** РРјСЏ State Store РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ. */
+    private final String restrictedWordsStoreName;
+
+    /** State Store РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ Р·Р°РїСЂРµС‰С‘РЅРЅС‹РјРё СЃР»РѕРІР°РјРё. */
+    private KeyValueStore<String, String> restrictedWordsStore;
+
+    /**
+     * РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїСЂРѕС†РµСЃСЃРѕСЂР°.
+     * 
+     * @param restrictedWordsStoreName РРјСЏ С…СЂР°РЅРёР»РёС‰Р° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     */
+    public RestrictedWordsProcessor(String restrictedWordsStoreName) {
+        this.restrictedWordsStoreName = restrictedWordsStoreName;
+    }
+
+    /**
+     * РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїСЂРѕС†РµСЃСЃРѕСЂР°.
+     * 
+     * @param context РљРѕРЅС‚РµРєСЃС‚ РїСЂРѕС†РµСЃСЃРѕСЂР°, РїСЂРµРґРѕСЃС‚Р°РІР»СЏСЋС‰РёР№ РґРѕСЃС‚СѓРї Рє State Store.
+     */
+    @Override
+    public void init(ProcessorContext<Void, Void> context) {
+        this.restrictedWordsStore = context.getStateStore(restrictedWordsStoreName);
+    }
+
+    /**
+     * РћР±СЂР°Р±РѕС‚РєР° РІС…РѕРґСЏС‰РёС… Р·Р°РїРёСЃРµР№.
+     * 
+     * @param record Р—Р°РїРёСЃСЊ, СЃРѕРґРµСЂР¶Р°С‰Р°СЏ РєР»СЋС‡ (СЃР»РѕРІРѕ) Рё Р·РЅР°С‡РµРЅРёРµ (РґРµР№СЃС‚РІРёРµ: РґРѕР±Р°РІР»РµРЅРёРµ РёР»Рё СѓРґР°Р»РµРЅРёРµ).
+     */
+    @Override
+    public void process(Record<String, String> record) {
+        logger.info("РўРµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ С…СЂР°РЅРёР»РёС‰Р° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ: {}", getAllRestrictedWords());
+
+        if (record.key() == null) {
+            logger.warn("РџРѕР»СѓС‡РµРЅР° Р·Р°РїРёСЃСЊ СЃ null РєР»СЋС‡РѕРј. РџСЂРѕРїСѓСЃРєР°РµРј.");
+            return;
+        }
+
+        String key = record.key().toLowerCase();
+        String value = record.value();
+
+        if (value == null) {
+            // РЈРґР°Р»РµРЅРёРµ СЃР»РѕРІР° РёР· С…СЂР°РЅРёР»РёС‰Р°
+            restrictedWordsStore.delete(key);
+            logger.info("Р’ С…СЂР°РЅРёР»РёС‰Рµ СѓРґР°Р»РµРЅРѕ Р·Р°РїСЂРµС‰С‘РЅРЅРѕРµ СЃР»РѕРІРѕ: {}", key);
+        } else {
+            // Р”РѕР±Р°РІР»РµРЅРёРµ СЃР»РѕРІР° РІ С…СЂР°РЅРёР»РёС‰Рµ
+            restrictedWordsStore.put(key, "true");
+            logger.info("Р’ С…СЂР°РЅРёР»РёС‰Рµ РґРѕР±Р°РІР»РµРЅРѕ Р·Р°РїСЂРµС‰С‘РЅРЅРѕРµ СЃР»РѕРІРѕ: {}", key);
+        }
+    }
+
+    /**
+     * РџРѕР»СѓС‡РµРЅРёРµ РІСЃРµС… Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ РёР· С…СЂР°РЅРёР»РёС‰Р°.
+     * 
+     * @return РЎРїРёСЃРѕРє РІСЃРµС… Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ, С…СЂР°РЅСЏС‰РёС…СЃСЏ РІ State Store.
+     */
+    public List<String> getAllRestrictedWords() {
+        List<String> words = new ArrayList<>();
+        try (KeyValueIterator<String, String> iterator = restrictedWordsStore.all()) {
+            while (iterator.hasNext()) {
+                words.add(iterator.next().key);
+            }
+        }
+        return words;
+    }
+
+    /**
+     * Р—Р°РєСЂС‹С‚РёРµ РїСЂРѕС†РµСЃСЃРѕСЂР°.
+     * Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё Р·Р°РІРµСЂС€РµРЅРёРё СЂР°Р±РѕС‚С‹.
+     */
+    @Override
+    public void close() {
+        // Р—Р°РєСЂС‹С‚РёРµ СЂРµСЃСѓСЂСЃРѕРІ, РµСЃР»Рё С‚СЂРµР±СѓРµС‚СЃСЏ
+    }
+}
+package org.example.topology;
+
+import org.example.serde.*;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.common.serialization.Serde;
+import org.springframework.kafka.support.serializer.JsonSerde;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Р¤Р°Р±СЂРёРєР° РґР»СЏ СЃРѕР·РґР°РЅРёСЏ С…СЂР°РЅРёР»РёС‰ (State Stores) РІ Kafka Streams.
+ * 
+ * РЎРѕРґРµСЂР¶РёС‚ РјРµС‚РѕРґС‹ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ KeyValueStore, РёСЃРїРѕР»СЊР·СѓРµРјС‹С… РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РґР°РЅРЅС‹С… Рѕ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»СЏС… Рё Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІР°С….
+ */
+public class StoresFactory {
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ StoreBuilder РґР»СЏ С…СЂР°РЅРёР»РёС‰Р° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.
+     * 
+     * РҐСЂР°РЅРёР»РёС‰Рµ РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅРѕ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРЅС„РѕСЂРјР°С†РёРё Рѕ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»СЏС….
+     * РљР»СЋС‡: String (recipientId - ID РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, РєРѕС‚РѕСЂС‹Р№ Р±Р»РѕРєРёСЂСѓРµС‚).
+     * Р—РЅР°С‡РµРЅРёРµ: List<String> (СЃРїРёСЃРѕРє blockedId - ID РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№, РєРѕС‚РѕСЂС‹С… Р·Р°Р±Р»РѕРєРёСЂРѕРІР°Р»Рё).
+     * 
+     * @param storeName РРјСЏ С…СЂР°РЅРёР»РёС‰Р°.
+     * @return StoreBuilder РґР»СЏ KeyValueStore.
+     */
+    public static StoreBuilder<KeyValueStore<String, List<String>>> blockedUsersStoreBuilder(String storeName) {
+        // РќР°СЃС‚СЂРѕР№РєР° JSON Serde РґР»СЏ СЃРµСЂРёР°Р»РёР·Р°С†РёРё/РґРµСЃРµСЂРёР°Р»РёР·Р°С†РёРё СЃРїРёСЃРєР° Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+        JsonSerde<List<String>> blockedUsersSerde = new JsonSerde<>();
+        blockedUsersSerde.configure(
+            Collections.singletonMap("spring.json.value.default.type", "java.util.List"), 
+            false
+        );
+
+        // РЎРѕР·РґР°РЅРёРµ Рё РІРѕР·РІСЂР°С‚ StoreBuilder РґР»СЏ KeyValueStore
+        return Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore(storeName), // РћРїСЂРµРґРµР»СЏРµРј С…СЂР°РЅРёР»РёС‰Рµ РєР°Рє РїРµСЂСЃРёСЃС‚РµРЅС‚РЅРѕРµ
+            Serdes.String(), // РљР»СЋС‡: String
+            blockedUsersSerde // Р—РЅР°С‡РµРЅРёРµ: JSON Serde РґР»СЏ СЃРїРёСЃРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+        );
+    }
+
+    /**
+     * РЎРѕР·РґР°С‘С‚ StoreBuilder РґР»СЏ С…СЂР°РЅРёР»РёС‰Р° Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     * 
+     * РҐСЂР°РЅРёР»РёС‰Рµ РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅРѕ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°РїСЂРµС‰С‘РЅРЅС‹С… СЃР»РѕРІ.
+     * РљР»СЋС‡: String (Р·Р°РїСЂРµС‰С‘РЅРЅРѕРµ СЃР»РѕРІРѕ).
+     * Р—РЅР°С‡РµРЅРёРµ: String (Р·Р°РїСЂРµС‰С‘РЅРЅРѕРµ СЃР»РѕРІРѕ - С…СЂР°РЅРёС‚СЃСЏ РІ РІРёРґРµ СЃС‚СЂРѕРєРё РґР»СЏ РїСЂРѕСЃС‚РѕС‚С‹ РѕР±СЂР°Р±РѕС‚РєРё).
+     * 
+     * @param storeName РРјСЏ С…СЂР°РЅРёР»РёС‰Р°.
+     * @return StoreBuilder РґР»СЏ KeyValueStore.
+     */
+    public static StoreBuilder<KeyValueStore<String, String>> restrictedWordsStoreBuilder(String storeName) {
+        // РЎРѕР·РґР°РЅРёРµ Рё РІРѕР·РІСЂР°С‚ StoreBuilder РґР»СЏ KeyValueStore
+        return Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore(storeName), // РћРїСЂРµРґРµР»СЏРµРј С…СЂР°РЅРёР»РёС‰Рµ РєР°Рє РїРµСЂСЃРёСЃС‚РµРЅС‚РЅРѕРµ
+            Serdes.String(), // РљР»СЋС‡: String
+            Serdes.String()  // Р—РЅР°С‡РµРЅРёРµ: String
+        );
+    }
+}

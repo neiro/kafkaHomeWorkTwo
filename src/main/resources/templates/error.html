@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ошибка</title>
+</head>
+<body>
+    <!-- Заголовок страницы ошибки -->
+    <h1>Произошла ошибка</h1>
+
+    <!-- Отображение кода статуса ошибки -->
+    <p>
+        Код статуса: 
+        <span th:text="${status}"></span> <!-- Значение передаётся из модели Thymeleaf -->
+    </p>
+
+    <!-- Отображение текстового описания ошибки -->
+    <p>
+        Ошибка: 
+        <span th:text="${error}"></span> <!-- Значение передаётся из модели Thymeleaf -->
+    </p>
+
+    <!-- Отображение сообщения об ошибке -->
+    <p>
+        Сообщение: 
+        <span th:text="${message}"></span> <!-- Значение передаётся из модели Thymeleaf -->
+    </p>
+
+    <!-- Отображение пути, на котором произошла ошибка -->
+    <p>
+        Путь: 
+        <span th:text="${path}"></span> <!-- Значение передаётся из модели Thymeleaf -->
+    </p>
+</body>
+</html>

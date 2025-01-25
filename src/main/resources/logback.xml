@@ -22,7 +22,7 @@
     <logger name="org.apache.kafka.clients" level="warn" />
 
     <!-- Глобальный уровень логирования -->
-    <root level="warn">
+    <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

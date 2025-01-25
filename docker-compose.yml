@@ -1,71 +1,83 @@
 version: '3.8'
+
 services:
-  kafka-0:
-    container_name: kafka-0
+  kafka:
+    container_name: kafka
     image: bitnami/kafka:3.4
     ports:
-      - "9094:9094"
+      - "9092:9092"  # Основной порт для клиентов Kafka
+      - "9093:9093"  # Порт для контроллера (KRaft)
+      - "9094:9094"  # Внешний порт (опционально)
     environment:
-      - KAFKA_ENABLE_KRAFT=yes #Включает использование Kraft вместо Zookeeper
-      - KAFKA_CFG_PROCESS_ROLES=broker,controller #Определяет роли узла
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_NODE_ID=0
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
-      - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093  # Одна нода
+      - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv  # Уникальный ID кластера
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-0:9092,EXTERNAL://127.0.0.1:9094
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
     volumes:
-      - kafka_0_data:/bitnami/kafka
+      - kafka_data:/bitnami/kafka
+    networks:
+      - kafka-network
 
-  kafka-1:
-    container_name: kafka-1
-    image: bitnami/kafka:3.4
-    ports:
-      - "9095:9095"
-    environment:
-      - KAFKA_ENABLE_KRAFT=yes
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CFG_NODE_ID=1
-      - KAFKA_CFG_PROCESS_ROLES=broker,controller
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
-      - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9095
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-1:9092,EXTERNAL://127.0.0.1:9095
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
-    volumes:
-      - kafka_1_data:/bitnami/kafka
-
-  kafka-2:
-    container_name: kafka-2
-    image: bitnami/kafka:3.4
-    ports:
-      - "9096:9096"
-    environment:
-      - KAFKA_ENABLE_KRAFT=yes
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CFG_NODE_ID=2
-      - KAFKA_CFG_PROCESS_ROLES=broker,controller
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
-      - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9096
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-2:9092,EXTERNAL://127.0.0.1:9096
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
-    volumes:
-      - kafka_2_data:/bitnami/kafka   
-
-  ui:
+  kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.0
+    container_name: kafka-ui
+    depends_on:
+      - kafka
     ports:
-      - "8080:8080"
+      - "8080:8080"  # Порт для Kafka UI
     environment:
-      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=127.0.0.1:9094,127.0.0.1:9095,127.0.0.1:9096
-      - KAFKA_CLUSTERS_0_NAME=kraft
+      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_NAME=single-node-kafka
+    networks:
+      - kafka-network
+
+  ksqldb-server:
+    container_name: ksqldb-server
+    image: confluentinc/ksqldb-server:latest
+    depends_on:
+      - kafka
+    environment:
+      KSQL_BOOTSTRAP_SERVERS: "kafka:9092"
+    ports:
+      - "8088:8088"  # Порт для ksqlDB
+    networks:
+      - kafka-network
+
+  ksqldb-cli:
+    container_name: ksqldb-cli
+    image: confluentinc/ksqldb-cli:latest
+    depends_on:
+      - ksqldb-server
+    entrypoint: /bin/sh -c 'exec ksql http://ksqldb-server:8088'
+    stdin_open: true
+    tty: true
+    networks:
+      - kafka-network
+
+  kafka-homework-two-app:
+    container_name: kafka-homework-two-app
+    build: .
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_KAFKA_STREAMS_APPLICATION_ID=kafka_homework_two_app_id
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8081:8081"  # Порт для вашего приложения
+    networks:
+      - kafka-network
 
 volumes:
-  kafka_0_data:
-  kafka_1_data:
-  kafka_2_data:
+  kafka_data:
+
+networks:
+  kafka-network:
+    driver: bridge

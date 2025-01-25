@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Управление запрещёнными словами и блокировками</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script>
+        let stompClient;
+
+        /**
+         * Функция для получения и отображения списка запрещённых слов.
+         * Выполняет GET-запрос к API и обновляет содержимое HTML-элемента с id "restricted-words-list".
+         */
+        async function fetchWords() {
+            const list = document.getElementById('restricted-words-list');
+            try {
+                const response = await fetch('/api/restricted-words/list');
+                const words = response.ok ? await response.json() : [];
+                list.innerHTML = words.map(word => `<li class='list-group-item'>${word}</li>`).join('');
+            } catch (e) {
+                console.error('Ошибка загрузки списка:', e);
+            }
+        }
+
+        /**
+         * Функция для добавления или удаления запрещённых слов.
+         * Выполняет POST или DELETE-запрос в зависимости от действия.
+         * 
+         * @param {Event} event - Событие формы.
+         * @param {string} action - Действие: "add" для добавления, "delete" для удаления.
+         */
+        async function submitWord(event, action) {
+            event.preventDefault();
+
+            const keyInputId = action === 'delete' ? 'key-input-delete' : 'key-input-add';
+            const key = document.getElementById(keyInputId).value.trim();
+
+            if (!key) {
+                return alert('Введите слово для добавления или удаления.');
+            }
+
+            let url = '/api/restricted-words';
+            let options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ key })
+            };
+
+            if (action === 'delete') {
+                url = `/api/restricted-words/${encodeURIComponent(key)}`;
+                options.method = 'DELETE';
+                options.body = null;
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const message = await response.text();
+                alert(message);
+                fetchWords();
+            } catch (e) {
+                console.error('Ошибка отправки:', e);
+            }
+        }
+
+
+        /**
+         * Функция для получения и отображения блокировок пользователей.
+         * Выполняет GET-запрос к API и обновляет содержимое HTML-элемента с id "blocked-users-list".
+         * При ошибке выводит текст ошибки.
+         */
+        async function fetchBlocks() {
+            const list = document.getElementById('blocked-users-list');
+            try {
+                const response = await fetch('/api/blocking/all');
+
+                // Если ответ содержит ошибку, выводим текст ошибки
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    list.innerHTML = `<li class="list-group-item text-danger">${errorMessage}</li>`;
+                    console.error('Ошибка:', errorMessage);
+                    return; // Останавливаем выполнение, если есть ошибка
+                }
+
+                // Если запрос успешен, обрабатываем данные
+                const blocks = await response.json();
+                if (blocks.length === 0) {
+                    list.innerHTML = '<li class="list-group-item">Нет блокировок.</li>';
+                    return;
+                }
+
+                // Отображаем список блокировок
+                list.innerHTML = blocks.map(block => {
+                    const blockedUsers = block.blockedUsers.join(', ');
+                    return `<li class='list-group-item'>Пользователь <strong>${block.userId}</strong> заблокировал: ${blockedUsers}</li>`;
+                }).join('');
+            } catch (e) {
+                // Обработка ошибок запроса (например, сеть недоступна)
+                list.innerHTML = `<li class="list-group-item text-danger">Ошибка загрузки блокировок: ${e.message}</li>`;
+                console.error('Ошибка загрузки блокировок:', e);
+            }
+        }
+
+
+        /**
+         * Инициализация функций при загрузке страницы.
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchWords();
+            fetchBlocks();
+        });
+    </script>
+</head>
+<body class="container mt-4">
+    <h1>Управление запрещёнными словами и блокировками</h1>
+
+    <section class="mb-5">
+        <h2>Запрещённые слова</h2>
+        <div class="row">
+            <!-- Список запрещённых слов -->
+            <div class="col-md-4 mb-3">
+                <h3>Список запрещенных слов</h3>
+                <ul id="restricted-words-list" class="list-group"></ul>
+            </div>
+    
+            <!-- Форма добавления запрещённых слов -->
+            <div class="col-md-4 mb-3">
+                <h3>Добавить запрещенное слово</h3>
+                <form onsubmit="submitWord(event, 'add')">
+                    <input id="key-input-add" class="form-control mb-2" placeholder="Слово для добавления" required/>
+                    <button type="submit" class="btn btn-success w-100">Добавить</button>
+                </form>
+            </div>
+    
+            <!-- Форма удаления запрещённых слов -->
+            <div class="col-md-4 mb-3">
+                <h3>Удалить слово из списка запрещенных</h3>
+                <form onsubmit="submitWord(event, 'delete')">
+                    <input id="key-input-delete" class="form-control mb-2" placeholder="Слово для удаления" required/>
+                    <button type="submit" class="btn btn-danger w-100">Удалить</button>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+
+    <!-- Раздел управления блокировками пользователей -->
+    <section class="mb-5">
+        <h2>Блокировки пользователей</h2>
+        <ul id="blocked-users-list" class="list-group mb-3"></ul>
+   </section>
+
+    <!-- Раздел отправки сообщений -->
+    <section class="mb-5">
+        <h2>Отправка сообщений</h2>
+        <div class="row">
+            <!-- Первый столбец -->
+            <div class="col-md-6">
+                <h3>Нет блокировки и цензуры</h3>
+                <form action="/api/web/send" method="post" class="mb-4">
+                    <div class="mb-3">
+                        <label for="senderId1" class="form-label">ID отправителя:</label>
+                        <input type="text" id="senderId1" name="senderId" class="form-control" value="john" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recipientIdMsg1" class="form-label">ID получателя:</label>
+                        <input type="text" id="recipientIdMsg1" name="recipientId" class="form-control" value="alice" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="content1" class="form-label">Содержимое сообщения:</label>
+                        <textarea id="content1" name="content" class="form-control" rows="3" required>Сообщение без цензуры и без блокировки</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Отправить сообщение</button>
+                </form>
+            </div>
+    
+            <!-- Второй столбец -->
+            <div class="col-md-6">
+                <h3>Имеется цензура + нет блокировки</h3>
+                <form action="/api/web/send" method="post" class="mb-4">
+                    <div class="mb-3">
+                        <label for="senderId2" class="form-label">ID отправителя:</label>
+                        <input type="text" id="senderId2" name="senderId" class="form-control" value="john" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recipientIdMsg2" class="form-label">ID получателя:</label>
+                        <input type="text" id="recipientIdMsg2" name="recipientId" class="form-control" value="alice" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="content2" class="form-label">Содержимое сообщения:</label>
+                        <textarea id="content2" name="content" class="form-control" rows="3" required>Сообщение 222 333 с цензурой без блокировки</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Отправить сообщение</button>
+                </form>
+            </div>
+    
+            <!-- Третий столбец -->
+            <div class="col-md-6">
+                <h3>Нет цензуры + имеется блокировка</h3>
+                <form action="/api/web/send" method="post" class="mb-4">
+                    <div class="mb-3">
+                        <label for="senderId3" class="form-label">ID отправителя:</label>
+                        <input type="text" id="senderId3" name="senderId" class="form-control" value="bob" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recipientIdMsg3" class="form-label">ID получателя:</label>
+                        <input type="text" id="recipientIdMsg3" name="recipientId" class="form-control" value="alice" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="content3" class="form-label">Содержимое сообщения:</label>
+                        <textarea id="content3" name="content" class="form-control" rows="3" required>Сообщение без цензуры с блокировокй</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Отправить сообщение</button>
+                </form>
+            </div>
+    
+            <!-- Четвёртый столбец -->
+            <div class="col-md-6">
+                <h3>Имеется цензура + имеется блокировка</h3>
+                <form action="/api/web/send" method="post" class="mb-4">
+                    <div class="mb-3">
+                        <label for="senderId4" class="form-label">ID отправителя:</label>
+                        <input type="text" id="senderId4" name="senderId" class="form-control" value="bob" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recipientIdMsg4" class="form-label">ID получателя:</label>
+                        <input type="text" id="recipientIdMsg4" name="recipientId" class="form-control" value="alice" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="content4" class="form-label">Содержимое сообщения:</label>
+                        <textarea id="content4" name="content" class="form-control" rows="3" required>Сообщение 111 222 с цензурой и блокировкой</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Отправить сообщение</button>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+</body>
+</html>
